@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>평창빌라 301호 · 모주희의 집착</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+    /* ══════════ 디자인 토큰 ══════════ */
+    :root {
+        --bg:        #07080b;
+        --bg-2:      #10131b;
+        --panel:     rgba(18,21,28,0.78);
+        --line:      rgba(255,255,255,0.08);
+        --line-2:    rgba(255,255,255,0.14);
+        --text:      #ebe9e4;
+        --muted:     #9aa0ab;
+        --gold:      #d8b877;
+        --gold-dim:  rgba(216,184,119,0.5);
+        --blood:     #c0392b;
+        --blood-soft:#e07a6b;
+        --uv:        #b06cff;
+        --ok:        #46e0a0;
+        --cursor-x: 50vw;
+        --cursor-y: 50vh;
+        --safe-t: env(safe-area-inset-top, 0px);
+        --safe-b: env(safe-area-inset-bottom, 0px);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+        margin: 0; padding: 0; width: 100%; height: 100%;
+        background: var(--bg); color: var(--text);
+        font-family: 'Noto Sans KR', sans-serif;
+        overflow: hidden; user-select: none;
+        overscroll-behavior: none; touch-action: manipulation;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    #game-container {
+        position: relative; width: 100vw;
+        height: 100vh; height: 100dvh;
+        margin: 0 auto; max-width: 520px;
+        background: var(--bg); overflow: hidden;
+        box-shadow: inset 0 0 120px rgba(0,0,0,0.9);
+    }
+
+    /* 시네마틱 오버레이 (모바일 성능 위해 그레인은 정적) */
+    #film-grain {
+        position: absolute; inset: 0; pointer-events: none; z-index: 9998; opacity: 0.05;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        mix-blend-mode: overlay;
+    }
+    #vignette { position: absolute; inset: 0; pointer-events: none; z-index: 9997; box-shadow: inset 0 0 160px rgba(0,0,0,0.95); }
+
+    /* ══════════ 씬: 복도 ══════════ */
+    #scene-hallway {
+        position: absolute; inset: 0;
+        background:
+            radial-gradient(ellipse 62% 48% at 50% 30%, rgba(200,220,255,0.07) 0%, transparent 62%),
+            radial-gradient(ellipse 96% 88% at 50% 42%, var(--bg-2) 0%, #0a0c11 52%, #040406 100%);
+        display: flex; justify-content: center; align-items: center;
+        transition: opacity 1.4s ease;
+    }
+    .flicker-light {
+        position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+        width: 70%; height: 14px; z-index: 1; filter: blur(7px);
+        background: radial-gradient(ellipse, rgba(200,220,255,0.28), transparent 62%);
+        animation: flicker 6s infinite;
+    }
+    @keyframes flicker { 0%,95%,100%{opacity:1;} 96%,99%{opacity:0.32;} 97.5%{opacity:0.9;} }
+
+    #uv-overlay {
+        position: absolute; inset: 0; z-index: 5; opacity: 0; pointer-events: none;
+        background: radial-gradient(circle at 50% 45%, rgba(50,10,90,0.45), rgba(8,0,18,0.95));
+        transition: opacity 0.4s; mix-blend-mode: color-dodge;
+    }
+    #game-container.uv-active #uv-overlay { opacity: 1; }
+
+    /* 측벽(원근) + 바닥 */
+    .side-wall { position: absolute; top: 0; bottom: 0; width: 30%; z-index: 0; pointer-events: none; }
+    #wall-left  { left: 0;  background: linear-gradient(to right, #04050a, #0f121a 65%, #171b26); clip-path: polygon(0 0,100% 17%,100% 83%,0 100%); box-shadow: inset -18px 0 42px rgba(0,0,0,0.65); }
+    #wall-right { right: 0; background: linear-gradient(to left,  #04050a, #0f121a 65%, #171b26); clip-path: polygon(0 17%,100% 0,100% 100%,0 83%); box-shadow: inset 18px 0 42px rgba(0,0,0,0.65); }
+    #floor {
+        position: absolute; bottom: 0; left: 0; width: 100%; height: 36%; z-index: 0;
+        background:
+            linear-gradient(to bottom, rgba(4,5,8,0.95) 0%, rgba(4,5,8,0.15) 45%, transparent),
+            repeating-linear-gradient(90deg, #1a1d24 0, #1a1d24 44px, #0d0f13 44px, #0d0f13 46px);
+        transform: perspective(600px) rotateX(72deg); transform-origin: bottom; opacity: 0.9;
+    }
+    .skirting { position: absolute; bottom: 36%; left: 0; width: 100%; height: 6px; z-index: 0; background: linear-gradient(#2a2e38, #0a0b0e); box-shadow: 0 4px 10px rgba(0,0,0,0.7); opacity: 0.8; }
+
+    /* 정전 모드 */
+    #game-container.power-off #scene-hallway { background: #020203; }
+    #game-container.power-off .flicker-light { opacity: 0 !important; animation: none; }
+    #game-container.power-off .prop,
+    #game-container.power-off .side-wall,
+    #game-container.power-off #floor { filter: brightness(0.25); }
+
+    /* ── 소품 ── */
+    .prop { position: absolute; z-index: 5; transition: filter 0.3s; filter: drop-shadow(4px 8px 12px rgba(0,0,0,0.85)); }
+    .prop svg { display: block; width: 100%; height: 100%; }
+    #prop-firebox  { top: 23%; left: 2%;  width: 15vw; max-width: 62px; }
+    #prop-trash    { bottom: 10%; left: 2%; width: 16vw; max-width: 76px; }
+    #prop-mailbox  { top: 38%; right: 2%; width: 16vw; max-width: 72px; }
+    #prop-electric { top: 14%; right: 3%; width: 12vw; max-width: 56px; height: 11vh; max-height: 88px;
+                     background: linear-gradient(145deg, #2a2d34, #101216); border: 1px solid #0a0b0e; border-radius: 4px;
+                     box-shadow: inset 0 0 12px #000, -6px 10px 18px rgba(0,0,0,0.9); }
+    #prop-electric::before { content:''; position:absolute; inset:16%; background: linear-gradient(160deg,#1a1c22,#0b0c10); border:1px solid #33363e; border-radius:2px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
+    #prop-electric::after  { content:''; position:absolute; top:40%; left:50%; transform:translateX(-50%); width:9px; height:22px; background:linear-gradient(#d0d0d0,#5c5c5c); border-radius:2px; box-shadow:0 2px 4px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.4); }
+    #prop-umbrella { bottom: 12%; right: 3%; width: 10vw; max-width: 46px; }
+    #prop-doormat  { bottom: 4%; left: 50%; transform: translateX(-50%) rotateX(60deg); width: 56vw; max-width: 240px; height: 11vh; max-height: 92px; z-index: 1;
+                     background: repeating-linear-gradient(90deg, #1d1d1d 0, #1d1d1d 3px, #141414 3px, #141414 6px);
+                     border: 4px solid #090909; border-radius: 4px; box-shadow: inset 0 0 22px #000, 0 14px 18px rgba(0,0,0,0.85); }
+
+    /* ── 조사 핫스팟 (터치 영역 넉넉히) ── */
+    .hotspot { position: absolute; z-index: 10; border-radius: 12px; }
+    .hotspot .pulse {
+        position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px;
+        border-radius: 50%; background: var(--gold);
+        box-shadow: 0 0 10px 3px rgba(216,184,119,0.55);
+        animation: pulse-dot 2.4s ease-in-out infinite; pointer-events: none;
+    }
+    @keyframes pulse-dot {
+        0%,100% { transform: scale(0.6); opacity: 0.45; box-shadow: 0 0 0 0 rgba(216,184,119,0.5); }
+        50%     { transform: scale(1);   opacity: 1;    box-shadow: 0 0 0 13px rgba(216,184,119,0); }
+    }
+    .hotspot:active { background: rgba(216,184,119,0.12); }
+    .hotspot.found { pointer-events: none; }
+    .hotspot.found .pulse { display: none; }
+
+    #hs-firebox  { top: 21%; left: 0;  width: 20vw; height: 16vh; }
+    #hs-trash    { bottom: 7%; left: 0; width: 21vw; height: 17vh; }
+    #hs-mailbox  { top: 35%; right: 0; width: 21vw; height: 15vh; }
+    #hs-electric { top: 12%; right: 1%; width: 16vw; height: 13vh; }
+    #hs-umbrella { bottom: 9%; right: 1%; width: 16vw; height: 15vh; }
+    #hs-doormat  { bottom: 4%; left: 50%; transform: translateX(-50%); width: 58vw; height: 13vh; }
+
+    /* ══════════ 철문 ══════════ */
+    #door-frame {
+        position: relative; z-index: 4;
+        width: 64vw; max-width: 280px;
+        height: 60dvh; max-height: 512px;
+        margin-top: -2vh;
+        background: linear-gradient(#0a0a0c, #050506);
+        border-radius: 6px; padding: 10px;
+        box-shadow: 0 30px 60px rgba(0,0,0,1), inset 0 0 14px rgba(0,0,0,1);
+    }
+    #door {
+        position: relative; width: 100%; height: 100%; border-radius: 3px; overflow: hidden;
+        background: linear-gradient(106deg, #3b3e45 0%, #23262c 46%, #14161a 100%);
+        box-shadow: inset 2px 2px 6px rgba(255,255,255,0.06), inset -8px -10px 22px rgba(0,0,0,0.9);
+        transform-origin: left; transform-style: preserve-3d;
+        transition: transform 2.4s cubic-bezier(0.25,0.1,0.25,1);
+    }
+    #door::before { /* 헤어라인 질감 */
+        content:''; position:absolute; inset:0; pointer-events:none;
+        background-image: repeating-linear-gradient(96deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
+    }
+    .door-panel { position: absolute; left: 12%; width: 76%; border-radius: 3px;
+        border: 1px solid rgba(255,255,255,0.04);
+        box-shadow: inset 0 0 26px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05); pointer-events: none; }
+    .door-panel.top    { top: 24%; height: 26%; }
+    .door-panel.bottom { top: 55%; height: 30%; }
+    .peephole { position: absolute; top: 17%; left: 50%; transform: translateX(-50%);
+        width: 12px; height: 12px; border-radius: 50%;
+        background: radial-gradient(circle at 40% 35%, #6a6f77, #0a0b0d 70%);
+        box-shadow: 0 0 0 2px #101216, inset 0 0 3px #000; }
+    .hinge { position: absolute; left: 3px; width: 7px; height: 34px; border-radius: 2px;
+        background: linear-gradient(#8b8f95, #34373c); box-shadow: 1px 2px 4px rgba(0,0,0,0.8); }
+    .hinge.h1 { top: 16%; } .hinge.h2 { bottom: 16%; }
+    .handle { position: absolute; top: 50%; left: 12px; transform: translateY(-50%);
+        width: 12px; height: 74px; border-radius: 6px;
+        background: linear-gradient(90deg, #9a9ea4, #43464b); box-shadow: 2px 4px 8px rgba(0,0,0,0.85); }
+
+    .door-plate {
+        position: absolute; top: 7%; left: 50%; transform: translateX(-50%);
+        padding: 4px 18px; border-radius: 3px;
+        background: linear-gradient(#2c2f35, #191b20);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 3px 6px rgba(0,0,0,0.7);
+    }
+    #door-number { color: #b9bdc4; font-family: 'Gowun Batang', serif; font-weight: 700;
+        font-size: clamp(1.6rem, 6vw, 2rem); letter-spacing: 0.35em; padding-left: 0.35em;
+        text-shadow: 0 1px 0 #000, 0 -1px 1px rgba(255,255,255,0.2); }
+
+    /* UV 단서 */
+    .uv-clue {
+        position: absolute; top: 30%; left: 6%; width: 88%; z-index: 6; text-align: center;
+        font-family: 'Nanum Pen Script', cursive; color: #fff; line-height: 1.45;
+        font-size: clamp(1.15rem, 4.8vw, 1.7rem); opacity: 0; pointer-events: none; transition: opacity 0.5s;
+        text-shadow: 0 0 6px #fff, 0 0 12px var(--uv), 0 0 22px var(--uv), 0 0 40px var(--uv);
+    }
+    #game-container.uv-active .uv-clue { opacity: 1; }
+
+    /* ── 도어락 ── */
+    #doorlock {
+        position: absolute; top: 46%; right: 12px; width: 54px; height: 138px;
+        background: linear-gradient(160deg, #24262c, #0a0b0e);
+        border-radius: 9px; border: 1px solid #000;
+        box-shadow: 4px 9px 18px rgba(0,0,0,1), inset 1px 1px 2px rgba(255,255,255,0.08), inset 0 -4px 8px rgba(0,0,0,0.8);
+        display: flex; flex-direction: column; align-items: center; padding-top: 12px; gap: 9px; transition: transform 0.15s;
+    }
+    #doorlock:active { transform: scale(0.97); }
+    .dl-screen { width: 40px; height: 19px; background: #02110c; color: var(--ok);
+        font-family: 'Courier New', monospace; font-size: 8px; font-weight: bold; letter-spacing: 1px;
+        display: flex; align-items: center; justify-content: center; border-radius: 3px;
+        box-shadow: inset 0 0 6px rgba(0,0,0,1); text-shadow: 0 0 5px var(--ok); }
+    .dl-keys { display: grid; grid-template-columns: repeat(3,1fr); gap: 4px; width: 38px; }
+    .dl-keys span { width: 100%; aspect-ratio: 1; border-radius: 2px;
+        background: linear-gradient(160deg, #2a2c32, #141519);
+        box-shadow: inset 0 1px 1px rgba(255,255,255,0.06), 0 1px 2px rgba(0,0,0,0.8); }
+
+    /* ══════════ 인벤토리 (상단 바) ══════════ */
+    #inventory {
+        position: absolute; left: 0; right: 0; top: calc(var(--safe-t) + 12px);
+        display: flex; justify-content: center; gap: 10px; z-index: 60; padding: 0 12px;
+    }
+    .inv-slot {
+        width: 15vw; height: 15vw; max-width: 58px; max-height: 58px;
+        background: var(--panel); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        border: 1px solid var(--line); border-radius: 12px;
+        display: flex; align-items: center; justify-content: center; position: relative;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.5); transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .inv-slot::before { content: ''; position: absolute; width: 38%; height: 38%; border-radius: 50%;
+        border: 1px dashed rgba(255,255,255,0.14); transition: opacity 0.3s; }
+    .inv-slot.filled::before { opacity: 0; }
+    .inv-slot.filled { border-color: var(--gold-dim); box-shadow: 0 0 14px rgba(216,184,119,0.28); }
+    .inv-slot svg { width: 62%; height: 62%; opacity: 0; position: relative; filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.8)); }
+    .inv-slot.filled svg { opacity: 1; animation: pop 0.35s ease; }
+    @keyframes pop { 0%{transform:scale(0.5);} 65%{transform:scale(1.15);} 100%{transform:scale(1);} }
+    .inv-slot::after { content: attr(data-name); position: absolute; bottom: -16px; left: 50%; transform: translateX(-50%);
+        font-size: 0.62rem; color: var(--muted); white-space: nowrap; opacity: 0; text-shadow: 0 1px 2px #000; }
+    .inv-slot.filled::after { opacity: 1; }
+
+    /* ══════════ 대화창 (하단 시트) ══════════ */
+    #vn-box {
+        position: absolute; left: 12px; right: 12px; bottom: calc(var(--safe-b) + 12px);
+        min-height: 108px; z-index: 100; display: none; flex-direction: column;
+        background: var(--panel); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--line); border-top: 2px solid var(--blood);
+        border-radius: 16px; padding: 16px 20px 14px; box-shadow: 0 18px 40px rgba(0,0,0,0.9);
+    }
+    #vn-box.show { display: flex; animation: sheetUp 0.3s ease-out; }
+    @keyframes sheetUp { from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:translateY(0);} }
+    #speaker { display: inline-block; align-self: flex-start; color: var(--gold);
+        font-family: 'Gowun Batang', serif; font-size: 0.98rem; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.5px; }
+    #dialogue { font-size: 1.02rem; line-height: 1.55; font-weight: 300; word-break: keep-all; text-shadow: 0 1px 2px #000; }
+    #dialogue em { color: var(--gold); font-style: normal; font-weight: 500; }
+    .click-indicator { align-self: flex-end; color: var(--muted); font-size: 0.72rem; margin-top: 10px; animation: blink 1.2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.25;} }
+
+    #overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.72); z-index: 190; display: none; }
+
+    /* ══════════ 아이템 획득 팝업 ══════════ */
+    #item-popup-overlay { position: absolute; inset: 0; z-index: 300; display: none;
+        justify-content: center; align-items: center; padding: 24px;
+        background: rgba(0,0,0,0.82); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+    #item-popup-overlay.show { display: flex; }
+    #item-popup-box { width: 100%; max-width: 360px; text-align: center; padding: 30px 24px calc(24px + var(--safe-b));
+        background: linear-gradient(160deg, #191c23, #0a0b0e); border: 1px solid var(--gold-dim);
+        border-radius: 18px; box-shadow: 0 24px 60px rgba(0,0,0,1); transform: scale(0.92); opacity: 0; transition: all 0.3s; }
+    #item-popup-overlay.show #item-popup-box { transform: scale(1); opacity: 1; }
+    #item-popup-visual { width: 112px; height: 112px; margin: 0 auto 18px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; border: 1px solid var(--line);
+        background: radial-gradient(circle, rgba(216,184,119,0.15), transparent 70%); box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+    #item-popup-visual svg { width: 66px; height: 66px; filter: drop-shadow(0 8px 10px rgba(0,0,0,0.8)); }
+    #item-popup-title { margin: 0 0 10px; color: var(--gold); font-family: 'Gowun Batang', serif; font-size: 1.35rem; }
+    #item-popup-desc { margin: 0 0 24px; color: var(--muted); font-size: 0.92rem; line-height: 1.55; word-break: keep-all; }
+    #item-popup-desc em { color: var(--text); font-style: normal; }
+    .btn-acquire { width: 100%; padding: 15px; font-size: 1rem; font-weight: 600; font-family: inherit;
+        letter-spacing: 2px; color: #0a0a0a; background: var(--gold); border: none; border-radius: 12px; }
+    .btn-acquire:active { filter: brightness(0.85); }
+
+    /* ══════════ 키패드 (하단 시트) ══════════ */
+    #keypad-ui {
+        position: absolute; left: 0; right: 0; bottom: 0; margin: 0 auto; width: 100%; max-width: 520px;
+        z-index: 200; padding: 10px 18px calc(20px + var(--safe-b));
+        background: linear-gradient(180deg, #15171d, #090a0d); border-top: 1px solid var(--line-2);
+        border-radius: 22px 22px 0 0; box-shadow: 0 -20px 50px rgba(0,0,0,0.9);
+        transform: translateY(112%); transition: transform 0.36s cubic-bezier(0.2,0.85,0.2,1);
+    }
+    #keypad-ui.active { transform: translateY(0); }
+    .kp-grip { width: 44px; height: 4px; border-radius: 4px; background: #333; margin: 4px auto 12px; }
+    .kp-close { position: absolute; top: 12px; right: 14px; background: none; border: none; color: var(--muted); font-size: 1.3rem; padding: 8px; }
+    .kp-title { text-align: center; color: var(--muted); font-family: 'Gowun Batang', serif; letter-spacing: 4px; font-size: 0.8rem; margin-bottom: 14px; }
+
+    .tool-bar { display: flex; gap: 10px; margin-bottom: 16px; }
+    .tool-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+        padding: 13px 6px; border-radius: 10px; font-size: 0.82rem; font-weight: 500;
+        color: #666; background: #0c0d11; border: 1px solid #1c1e25; box-shadow: inset 0 2px 5px rgba(0,0,0,0.8); }
+    .tool-btn svg { width: 17px; height: 17px; opacity: 0.3; }
+    .tool-btn.unlocked { color: #bbb; border-color: #34373f; }
+    .tool-btn.unlocked svg { opacity: 1; }
+    .tool-btn.unlocked:active { background: #1a1c22; color: #fff; }
+    .tool-btn.uv-on { background: #2a0845; color: #fff; border-color: var(--uv); box-shadow: inset 0 0 15px rgba(176,108,255,0.35); }
+    .tool-btn.graphite-on { background: #24262c; color: #fff; border-color: #6a6e77; box-shadow: inset 0 0 15px rgba(255,255,255,0.12); }
+
+    .kp-display { height: 58px; margin-bottom: 16px; border-radius: 10px;
+        background: #010402; border: 1px solid #111; box-shadow: inset 0 0 12px rgba(75,227,223,0.12);
+        display: flex; align-items: center; justify-content: center;
+        color: #4be3df; font-family: 'Courier New', monospace; font-size: 2rem; letter-spacing: 10px; }
+    .kp-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    .kp-btn { position: relative; padding: 16px 0; border-radius: 12px; font-family: inherit;
+        font-size: 1.5rem; font-weight: 600; color: #dcdcdc;
+        background: linear-gradient(#20232a, #131519); border: 1px solid #000; border-top: 1px solid #34373f;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.7); }
+    .kp-btn:active { background: #0c0d11; color: #fff; transform: translateY(2px); box-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+    .kp-enter { background: linear-gradient(#3a1614, #1a0807); border-top: 1px solid #5a2624; color: var(--blood-soft); }
+
+    .fingerprint { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.5s; }
+    .fingerprint::before { content: ''; position: absolute; inset: 12%;
+        background-image: repeating-radial-gradient(circle at 45% 55%, transparent, transparent 3px, rgba(255,255,255,0.18) 4px, rgba(255,255,255,0.18) 5px);
+        -webkit-mask-image: radial-gradient(circle, black 32%, transparent 70%); mask-image: radial-gradient(circle, black 32%, transparent 70%); }
+    #game-container.graphite-active .has-print .fingerprint { opacity: 1; }
+
+    /* ══════════ 씬: 방 내부 ══════════ */
+    #scene-room { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none;
+        overflow: hidden; transition: opacity 1.8s ease; }
+    .room-bg { position: absolute; inset: -5%; background: linear-gradient(#060608, #000); }
+    .room-furniture { position: absolute; }
+    .rf-bed    { bottom: 12%; left: 6%;  width: 52vw; max-width: 250px; height: 15vh; background: #111; border: 1px solid #222; border-radius: 10px; transform: perspective(600px) rotateX(40deg); box-shadow: 0 20px 50px #000; }
+    .rf-closet { top: 12%; right: 6%; width: 30vw; max-width: 150px; height: 46vh; background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 5px; box-shadow: inset 10px 0 20px #000; }
+    .rf-table  { bottom: 28%; right: 34%; width: 40vw; max-width: 180px; height: 10vh; background: #0d0d0d; border: 1px solid #222; transform: perspective(400px) rotateX(50deg); box-shadow: 0 30px 40px #000; }
+    #room-flashlight { position: absolute; inset: 0; z-index: 10; pointer-events: none;
+        background: radial-gradient(circle 42vw at var(--cursor-x) var(--cursor-y), transparent 0%, rgba(0,0,0,0.82) 32%, #000 100%); }
+    .room-hs { position: absolute; z-index: 15; width: 64px; height: 64px; }
+    .glint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 6px; height: 6px;
+        background: #fff; border-radius: 50%; box-shadow: 0 0 15px 5px rgba(255,255,255,0.5);
+        animation: twinkle 1.5s infinite alternate; pointer-events: none; }
+    @keyframes twinkle { 0%{opacity:0.1; transform:translate(-50%,-50%) scale(0.5);} 100%{opacity:1; transform:translate(-50%,-50%) scale(1.5);} }
+    #hs-shoes   { bottom: 20%; left: 30%; }
+    #hs-table   { bottom: 30%; right: 40%; }
+    #hs-ceiling { top: 16%; left: 45%; opacity: 0; pointer-events: none; transition: opacity 1s; }
+    #hs-ceiling.active { opacity: 1; pointer-events: auto; }
+    .red-glint { background: #ff1414; box-shadow: 0 0 25px 10px rgba(255,0,0,0.8); animation: redBlink 0.5s infinite alternate; }
+    @keyframes redBlink { 0%{opacity:0.2;} 100%{opacity:1;} }
+
+    /* ══════════ 엔딩 ══════════ */
+    #end-sequence { position: absolute; inset: 0; z-index: 9999; pointer-events: none; opacity: 0;
+        background: #000; display: flex; align-items: center; justify-content: center; }
+    #end-sequence.hit { opacity: 1; background: radial-gradient(circle at 50% 50%, #900, #300 50%, #000); mix-blend-mode: color-burn; }
+    #end-sequence.fade-out { opacity: 1; background: #050000; mix-blend-mode: normal; transition: background 3s ease-in; }
+    #glass-crack { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.9)); }
+    #end-text { font-family: 'Gowun Batang', serif; color: #ff4444; font-weight: bold; text-align: center;
+        font-size: clamp(1.4rem, 5vw, 2rem); line-height: 1.6; letter-spacing: 2px; padding: 20px;
+        opacity: 0; text-shadow: 0 0 15px #f00; }
+    .shake-hard { animation: shakeHard 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes shakeHard {
+        0%,100%{transform:translate(0,0) rotate(0);} 10%{transform:translate(-16px,-14px) rotate(-2deg);}
+        20%{transform:translate(16px,16px) rotate(2deg);} 30%{transform:translate(-16px,14px) rotate(-2deg);}
+        40%{transform:translate(16px,-14px) rotate(2deg);} 50%{transform:translate(-8px,-8px) rotate(-1deg);}
+        60%{transform:translate(8px,8px) rotate(1deg);}
+    }
+</style>
+</head>
+<body>
+<div id="game-container">
+    <div id="vignette"></div>
+    <div id="film-grain"></div>
+
+    <!-- 인벤토리 -->
+    <div id="inventory">
+        <div class="inv-slot" id="inv-wire" data-name="철사"></div>
+        <div class="inv-slot" id="inv-uv" data-name="UV라이트"></div>
+        <div class="inv-slot" id="inv-graphite" data-name="흑연가루"></div>
+        <div class="inv-slot" id="inv-photo" data-name="찢어진사진"></div>
+    </div>
+
+    <!-- 씬 1: 복도 -->
+    <div id="scene-hallway">
+        <div class="flicker-light"></div>
+        <div id="uv-overlay"></div>
+        <div class="side-wall" id="wall-left"></div>
+        <div class="side-wall" id="wall-right"></div>
+        <div class="skirting"></div>
+        <div id="floor"></div>
+
+        <!-- 소품 -->
+        <div class="prop" id="prop-firebox"><svg viewBox="0 0 90 140"><rect x="10" y="10" width="70" height="120" fill="#5a1414" rx="4" stroke="#280707" stroke-width="4"/><text x="45" y="30" fill="#e0b0a8" font-size="10" text-anchor="middle" font-weight="bold">FIRE</text><rect x="30" y="52" width="30" height="42" fill="#141414" stroke="#3a3a3a" stroke-width="2" rx="2"/><circle cx="70" cy="72" r="3" fill="#2a2a2a"/></svg></div>
+        <div class="prop" id="prop-trash"><svg viewBox="0 0 100 120"><path d="M20,40 Q10,90 30,110 L70,110 Q90,90 80,40 Q60,20 50,30 Q40,20 20,40 Z" fill="#20232a" stroke="#000" stroke-width="2"/><path d="M30,50 Q50,70 70,45" fill="none" stroke="#33363f" stroke-width="2"/></svg></div>
+        <div class="prop" id="prop-mailbox"><svg viewBox="0 0 110 90"><rect x="10" y="10" width="90" height="70" fill="#2f333b" rx="6" stroke="#111" stroke-width="3"/><rect x="20" y="30" width="70" height="8" fill="#111" rx="2"/><circle cx="55" cy="60" r="6" fill="#111" stroke="#555" stroke-width="1.5"/></svg></div>
+        <div class="prop" id="prop-electric"></div>
+        <div class="prop" id="prop-umbrella"><svg viewBox="0 0 60 90"><rect x="10" y="30" width="40" height="60" fill="#20232a" rx="6" stroke="#0a0b0d" stroke-width="2"/><path d="M25,30 L25,5 Q30,-5 35,5" fill="none" stroke="#0a0b0d" stroke-width="4" stroke-linecap="round"/><path d="M35,30 L35,15 Q40,5 45,15" fill="none" stroke="#2a2c32" stroke-width="3" stroke-linecap="round"/></svg></div>
+        <div class="prop" id="prop-doormat"></div>
+
+        <!-- 핫스팟 -->
+        <div class="hotspot" id="hs-firebox" onclick="interact('firebox')"><div class="pulse"></div></div>
+        <div class="hotspot" id="hs-trash" onclick="interact('trash')"><div class="pulse"></div></div>
+        <div class="hotspot" id="hs-mailbox" onclick="interact('mailbox')"><div class="pulse"></div></div>
+        <div class="hotspot" id="hs-electric" onclick="interact('electric')"><div class="pulse"></div></div>
+        <div class="hotspot" id="hs-umbrella" onclick="interact('umbrella')"><div class="pulse"></div></div>
+        <div class="hotspot" id="hs-doormat" onclick="interact('doormat')"><div class="pulse"></div></div>
+
+        <!-- 철문 -->
+        <div id="door-frame">
+            <div id="door">
+                <div class="hinge h1"></div><div class="hinge h2"></div>
+                <div class="door-plate"><div id="door-number">301</div></div>
+                <div class="peephole"></div>
+                <div class="door-panel top"></div>
+                <div class="door-panel bottom"></div>
+                <div class="handle"></div>
+                <div class="uv-clue">
+                    비밀번호 까먹지 마.<br><br>
+                    첫번째(A) + 두번째(B) = 10<br>
+                    A − B = 4<br><br>
+                    세번째(C) = A + 2<br>
+                    네번째(D) = B − 1
+                </div>
+                <div id="doorlock" onclick="openKeypad()">
+                    <div class="dl-screen">LOCK</div>
+                    <div class="dl-keys"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 씬 2: 방 내부 -->
+    <div id="scene-room">
+        <div class="room-bg">
+            <div class="room-furniture rf-bed"></div>
+            <div class="room-furniture rf-closet"></div>
+            <div class="room-furniture rf-table"></div>
+        </div>
+        <div id="room-flashlight"></div>
+        <div class="room-hs" id="hs-shoes" onclick="interactRoom('shoes')"><div class="glint"></div></div>
+        <div class="room-hs" id="hs-table" onclick="interactRoom('table')"><div class="glint"></div></div>
+        <div class="room-hs" id="hs-ceiling" onclick="interactRoom('ceiling')"><div class="glint red-glint"></div></div>
+    </div>
+
+    <div id="overlay" onclick="closeKeypad()"></div>
+
+    <!-- 아이템 팝업 -->
+    <div id="item-popup-overlay">
+        <div id="item-popup-box">
+            <div id="item-popup-visual"></div>
+            <h2 id="item-popup-title">아이템</h2>
+            <p id="item-popup-desc">설명</p>
+            <button class="btn-acquire" onclick="closeItemPopup()">획득</button>
+        </div>
+    </div>
+
+    <!-- 키패드 시트 -->
+    <div id="keypad-ui">
+        <button class="kp-close" onclick="closeKeypad()">✖</button>
+        <div class="kp-grip"></div>
+        <div class="kp-title">SMART LOCK</div>
+        <div class="tool-bar">
+            <div class="tool-btn" id="btn-uv" onclick="toggleUV()">
+                <svg viewBox="0 0 100 100"><rect x="25" y="40" width="50" height="40" fill="#333" rx="5"/><rect x="35" y="25" width="30" height="15" fill="#111"/><path d="M35,25 L20,0 L80,0 L65,25 Z" fill="rgba(176,108,255,0.85)"/></svg> UV라이트
+            </div>
+            <div class="tool-btn" id="btn-graphite" onclick="toggleGraphite()">
+                <svg viewBox="0 0 100 100"><path d="M30,45 L30,90 L70,90 L70,45 Z" fill="#222"/><rect x="40" y="25" width="20" height="20" fill="#111"/><path d="M20,95 L80,95" stroke="#444" stroke-width="6" stroke-linecap="round"/></svg> 흑연가루
+            </div>
+        </div>
+        <div class="kp-display" id="kp-display"></div>
+        <div class="kp-grid">
+            <button class="kp-btn" onclick="pressKey('1')">1</button>
+            <button class="kp-btn has-print" onclick="pressKey('2')">2<div class="fingerprint"></div></button>
+            <button class="kp-btn has-print" onclick="pressKey('3')">3<div class="fingerprint"></div></button>
+            <button class="kp-btn" onclick="pressKey('4')">4</button>
+            <button class="kp-btn" onclick="pressKey('5')">5</button>
+            <button class="kp-btn" onclick="pressKey('6')">6</button>
+            <button class="kp-btn has-print" onclick="pressKey('7')">7<div class="fingerprint"></div></button>
+            <button class="kp-btn" onclick="pressKey('8')">8</button>
+            <button class="kp-btn has-print" onclick="pressKey('9')">9<div class="fingerprint"></div></button>
+            <button class="kp-btn" onclick="pressKey('*')">*</button>
+            <button class="kp-btn" onclick="pressKey('0')">0</button>
+            <button class="kp-btn kp-enter" onclick="checkPassword()">↵</button>
+        </div>
+    </div>
+
+    <!-- 대화창 -->
+    <div id="vn-box" onclick="skipOrNext()">
+        <div id="speaker">모주희</div>
+        <div id="dialogue"></div>
+        <div class="click-indicator">터치하여 진행 ▼</div>
+    </div>
+
+    <!-- 엔딩 -->
+    <div id="end-sequence">
+        <svg id="glass-crack" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+            <path d="M500 500 L150 50 M500 500 L850 80 M500 500 L350 950 M500 500 L950 650 M500 500 L80 550 M450 450 L550 550 M480 520 L600 300 M500 500 L700 900" stroke="#fff" stroke-width="4" fill="none" opacity="0.9"/>
+            <path d="M500 500 L150 50 M500 500 L850 80 M500 500 L350 950" stroke="#f00" stroke-width="2" fill="none" transform="translate(3,3)" opacity="0.6"/>
+        </svg>
+        <div id="end-text">머리를 강타당했다...<br><br>의식이 멀어진다...</div>
+    </div>
+</div>
+
+<script>
+    // 퍼즐 정답: 7392
+    const CORRECT_PASSWORD = "7392";
+    let inv = { wire: false, uv: false, graphite: false, photo: false };
+    let isPowerOff = false, isUVActive = false, isGraphiteActive = false;
+    let currentInput = "";
+
+    const vnBox = document.getElementById('vn-box');
+    const speakerEl = document.getElementById('speaker');
+    const dialogueEl = document.getElementById('dialogue');
+    let isTyping = false, typeInterval, currentFullText = "", dialogueQueue = [];
+    let isRoomScene = false, roomItemsFound = 0;
+
+    const svgIcons = {
+        wire: '<svg viewBox="0 0 100 100"><path d="M30,80 Q50,20 70,80" fill="none" stroke="#a0a4a8" stroke-width="8" stroke-linecap="round"/></svg>',
+        uv: '<svg viewBox="0 0 100 100"><rect x="35" y="40" width="30" height="45" fill="#2a2d33" rx="4" stroke="#111" stroke-width="2"/><rect x="40" y="25" width="20" height="15" fill="#111"/><path d="M40,25 L30,5 L70,5 L60,25 Z" fill="rgba(176,108,255,0.9)"/></svg>',
+        graphite: '<svg viewBox="0 0 100 100"><path d="M35,45 L35,85 L65,85 L65,45 Z" fill="#1a1c22" stroke="#111" stroke-width="2"/><rect x="42" y="25" width="16" height="20" fill="#111"/><path d="M25,90 L75,90" stroke="#444" stroke-width="6" stroke-linecap="round"/></svg>',
+        photo: '<svg viewBox="0 0 100 100"><rect x="25" y="20" width="50" height="60" fill="#e8e8e8" transform="rotate(-5 50 50)"/><path d="M25,50 L40,35 L60,55 L75,40 L75,80 L25,80 Z" fill="#888" transform="rotate(-5 50 50)"/></svg>'
+    };
+
+    /* ── Web Audio ── */
+    let audioCtx, bgmOsc1, bgmOsc2, bgmGain, lfo;
+    function initAudio() {
+        if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); startBGM(); }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    document.body.addEventListener('click', initAudio, { once: true });
+    document.body.addEventListener('touchstart', initAudio, { once: true });
+
+    function startBGM() {
+        if (bgmOsc1) return;
+        const t = audioCtx.currentTime;
+        bgmOsc1 = audioCtx.createOscillator(); bgmOsc1.type = 'sine'; bgmOsc1.frequency.value = 45;
+        bgmOsc2 = audioCtx.createOscillator(); bgmOsc2.type = 'triangle'; bgmOsc2.frequency.value = 47;
+        bgmGain = audioCtx.createGain();
+        bgmGain.gain.setValueAtTime(0, t); bgmGain.gain.linearRampToValueAtTime(0.4, t + 4);
+        lfo = audioCtx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.15;
+        const lfoGain = audioCtx.createGain(); lfoGain.gain.value = 0.15;
+        lfo.connect(lfoGain); lfoGain.connect(bgmGain.gain);
+        bgmOsc1.connect(bgmGain); bgmOsc2.connect(bgmGain); bgmGain.connect(audioCtx.destination);
+        bgmOsc1.start(); bgmOsc2.start(); lfo.start();
+    }
+    function playScream() {
+        initAudio(); if (!audioCtx) return;
+        const t = audioCtx.currentTime, dur = 1.5;
+        const hitOsc = audioCtx.createOscillator(), hitGain = audioCtx.createGain();
+        hitOsc.type = 'triangle'; hitOsc.frequency.setValueAtTime(120, t); hitOsc.frequency.exponentialRampToValueAtTime(10, t + 0.2);
+        hitGain.gain.setValueAtTime(8.0, t); hitGain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
+        hitOsc.connect(hitGain); hitGain.connect(audioCtx.destination); hitOsc.start(t); hitOsc.stop(t + 0.3);
+        const vco1 = audioCtx.createOscillator(), vco2 = audioCtx.createOscillator();
+        vco1.type = 'sawtooth'; vco2.type = 'square';
+        vco1.frequency.setValueAtTime(900, t); vco1.frequency.linearRampToValueAtTime(1800, t + 0.05); vco1.frequency.exponentialRampToValueAtTime(1300, t + dur);
+        vco2.frequency.setValueAtTime(920, t); vco2.frequency.linearRampToValueAtTime(1850, t + 0.05); vco2.frequency.exponentialRampToValueAtTime(1350, t + dur);
+        const vLfo = audioCtx.createOscillator(); vLfo.type = 'sawtooth'; vLfo.frequency.value = 25;
+        const vLfoGain = audioCtx.createGain(); vLfoGain.gain.value = 300;
+        vLfo.connect(vLfoGain); vLfoGain.connect(vco1.frequency); vLfoGain.connect(vco2.frequency);
+        const screamGain = audioCtx.createGain();
+        screamGain.gain.setValueAtTime(0, t); screamGain.gain.linearRampToValueAtTime(4.0, t + 0.03);
+        screamGain.gain.setValueAtTime(4.0, t + 0.3); screamGain.gain.exponentialRampToValueAtTime(0.01, t + dur);
+        const filter = audioCtx.createBiquadFilter(); filter.type = 'bandpass'; filter.frequency.value = 2000; filter.Q.value = 1.5;
+        vco1.connect(filter); vco2.connect(filter); filter.connect(screamGain); screamGain.connect(audioCtx.destination);
+        vLfo.start(t); vLfo.stop(t + dur); vco1.start(t); vco1.stop(t + dur); vco2.start(t); vco2.stop(t + dur);
+    }
+
+    /* ── VN 시스템 ── */
+    function showText(text, speaker = "모주희") {
+        clearInterval(typeInterval); vnBox.classList.add('show');
+        speakerEl.innerText = speaker; dialogueEl.innerHTML = "";
+        currentFullText = text; isTyping = true;
+        const tokens = text.match(/<[^>]+>|[^<]/g) || [];
+        let i = 0, buf = "";
+        typeInterval = setInterval(() => {
+            buf += tokens[i]; dialogueEl.innerHTML = buf; i++;
+            if (i >= tokens.length) { clearInterval(typeInterval); isTyping = false; }
+        }, 35);
+    }
+    function queueDialogue(texts) { dialogueQueue = texts; processQueue(); }
+    function processQueue() {
+        if (dialogueQueue.length > 0) { const next = dialogueQueue.shift(); showText(next.text, next.speaker || "모주희"); }
+        else { vnBox.classList.remove('show'); }
+    }
+    function skipOrNext() {
+        if (isTyping) { clearInterval(typeInterval); dialogueEl.innerHTML = currentFullText; isTyping = false; }
+        else { if (dialogueQueue.length > 0) processQueue(); else vnBox.classList.remove('show'); }
+    }
+
+    /* ── 팝업 ── */
+    let pendingItem = null;
+    function openItemPopup(id, name, desc) {
+        document.getElementById('item-popup-visual').innerHTML = svgIcons[id];
+        document.getElementById('item-popup-title').innerText = name;
+        document.getElementById('item-popup-desc').innerHTML = desc;
+        document.getElementById('item-popup-overlay').classList.add('show');
+        pendingItem = id;
+    }
+    function closeItemPopup() {
+        document.getElementById('item-popup-overlay').classList.remove('show');
+        if (pendingItem) {
+            inv[pendingItem] = true;
+            const slot = document.getElementById('inv-' + pendingItem);
+            slot.classList.add('filled'); slot.innerHTML = svgIcons[pendingItem];
+            if (pendingItem === 'uv') document.getElementById('btn-uv').classList.add('unlocked');
+            if (pendingItem === 'graphite') document.getElementById('btn-graphite').classList.add('unlocked');
+            pendingItem = null;
+        }
+    }
+
+    /* ── 복도 상호작용 ── */
+    function interact(target) {
+        if (target === 'trash') {
+            if (!inv.photo) {
+                document.getElementById('hs-trash').classList.add('found');
+                openItemPopup('photo', '찢어진 사진', '쓰레기 봉투에 갈기갈기 찢겨 버려진 오빠의 사진.<br>김연정, 기어코 오빠를 갖고 노는구나. 용서 못해.');
+                queueDialogue([{ text: "(김연정이 버린 쓰레기 속에서 <em>찢겨진 사진</em>을 주웠다. 분노가 치민다.)" }]);
+            }
+        } else if (target === 'umbrella') {
+            if (!inv.wire) {
+                document.getElementById('hs-umbrella').classList.add('found');
+                openItemPopup('wire', '구부러진 철사', '우산 속에 숨겨져 있던 빳빳하고 구부러진 철사 조각.<br>자물쇠를 따는 데 유용할 것 같다.');
+                queueDialogue([{ text: "축축한 우산이다. 누군가 방금까지 쓴 것 같아...<br>손잡이 틈에서 <em>구부러진 철사</em>를 발견했다." }]);
+            }
+        } else if (target === 'mailbox') {
+            if (!inv.wire) { showText("우편함이 자물쇠로 잠겨있다. 얇고 단단한 게 있으면 딸 수 있을 텐데..."); }
+            else if (!inv.uv) {
+                document.getElementById('hs-mailbox').classList.add('found');
+                openItemPopup('uv', '특수 UV 라이트', '어제 미리 우편함에 숨겨둔 특수 장비.<br>투명 잉크나 특수 물질을 비출 때 쓰인다.');
+                queueDialogue([{ text: "철사로 우편함 자물쇠를 돌려 열었다!<br>안에 내가 숨겨둔 <em>특수 UV 손전등</em>이 있다." }]);
+            }
+        } else if (target === 'firebox') {
+            if (!inv.graphite) {
+                document.getElementById('hs-firebox').classList.add('found');
+                openItemPopup('graphite', '흑연 가루', '과학수사용 흑연 가루 통.<br>표면에 뿌리면 누군가의 지문을 선명하게 드러낼 수 있다.');
+                queueDialogue([{ text: "소화전함 구석에서 <em>흑연 가루</em>를 챙겼다. 완벽해." }]);
+            }
+        } else if (target === 'doormat') {
+            showText("발매트 밑에 진흙과 모래가 잔뜩 있다...<br>누군가 급하게 신발을 털고 들어간 흔적이야.");
+        } else if (target === 'electric') {
+            if (!isPowerOff) {
+                isPowerOff = true;
+                document.getElementById('game-container').classList.add('power-off');
+                queueDialogue([{ text: "배전함 덮개를 억지로 열고 <em>복도 차단기를 내렸다.</em><br>이제 완전히 어두워졌군." }]);
+            } else { showText("차단기를 내렸다. 불을 다시 켤 필요는 없어."); }
+        }
+    }
+
+    /* ── 도어락 & 툴 ── */
+    function openKeypad() {
+        document.getElementById('keypad-ui').classList.add('active');
+        document.getElementById('overlay').style.display = 'block';
+        currentInput = ""; document.getElementById('kp-display').innerText = "";
+    }
+    function closeKeypad() {
+        document.getElementById('keypad-ui').classList.remove('active');
+        document.getElementById('overlay').style.display = 'none';
+    }
+    function toggleUV() {
+        if (!inv.uv) return;
+        if (!isPowerOff) {
+            closeKeypad();
+            queueDialogue([{ text: "주변이 너무 밝아서 투명 잉크가 안 보여.<br><em>복도 불을 먼저 꺼야 할 텐데...</em> (배전함을 찾아보자)" }]);
+            return;
+        }
+        isUVActive = !isUVActive;
+        const btn = document.getElementById('btn-uv'), container = document.getElementById('game-container');
+        if (isUVActive) {
+            btn.classList.add('uv-on'); container.classList.add('uv-active');
+            showText("(UV 불빛을 비추자 벽면에 투명 잉크로 쓴 <em>비밀번호 힌트</em>가 나타났다!)");
+        } else { btn.classList.remove('uv-on'); container.classList.remove('uv-active'); }
+    }
+    function toggleGraphite() {
+        if (!inv.graphite) return;
+        document.getElementById('btn-graphite').classList.add('graphite-on');
+        document.getElementById('game-container').classList.add('graphite-active');
+        showText("(흑연 가루를 묻히자 <em>2, 3, 7, 9</em> 버튼에만 지문이 나타났다.)");
+    }
+    function pressKey(num) {
+        if (currentInput.length < 4) { currentInput += num; document.getElementById('kp-display').innerText = currentInput.replace(/./g, '●'); }
+    }
+    function checkPassword() {
+        const kp = document.getElementById('kp-display');
+        if (currentInput === CORRECT_PASSWORD) {
+            kp.style.color = "#5dff9b"; kp.innerText = "OPEN";
+            setTimeout(() => {
+                closeKeypad(); document.getElementById('game-container').classList.remove('uv-active');
+                document.getElementById('door').style.transform = "rotateY(-78deg)";
+                if (bgmGain) bgmGain.gain.linearRampToValueAtTime(0.05, audioCtx.currentTime + 1);
+                queueDialogue([{ text: "<em>7392</em>... 열렸다. 딱 기다려." }, { text: "(문을 열고 301호 안으로 조심스럽게 들어간다...)" }]);
+                setTimeout(enterRoom, 2500);
+            }, 800);
+        } else {
+            kp.style.color = "var(--blood-soft)"; kp.innerText = "ERR";
+            showText("틀렸어. 공식을 풀고 4자리를 입력해야 해.");
+            setTimeout(() => { kp.style.color = "#4be3df"; currentInput = ""; kp.innerText = ""; }, 800);
+        }
+    }
+
+    /* ── 방 내부 ── */
+    function enterRoom() {
+        isRoomScene = true;
+        document.getElementById('scene-hallway').style.opacity = "0";
+        setTimeout(() => {
+            document.getElementById('scene-hallway').style.display = "none";
+            const room = document.getElementById('scene-room');
+            room.style.opacity = "1"; room.style.pointerEvents = "auto";
+            showText("어둠 속에서 <em>반짝이는 것들</em>을 터치해서 조사해보자.");
+        }, 1500);
+    }
+    function updateFlashlight(x, y) {
+        if (isRoomScene) {
+            document.documentElement.style.setProperty('--cursor-x', x + 'px');
+            document.documentElement.style.setProperty('--cursor-y', y + 'px');
+        }
+    }
+    document.addEventListener('mousemove', (e) => updateFlashlight(e.clientX, e.clientY));
+    document.addEventListener('touchmove', (e) => {
+        if (isRoomScene && e.touches.length > 0) updateFlashlight(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+
+    function interactRoom(target) {
+        if (target === 'shoes') {
+            document.getElementById('hs-shoes').style.display = 'none';
+            showText("남성용 구두... 이거 강혁 오빠 구두잖아?! 용서 못해!!!");
+            checkRoomProgress();
+        } else if (target === 'table') {
+            document.getElementById('hs-table').style.display = 'none';
+            showText("테이블 밑에 하얀 가루와 드릴 밥이 떨어져 있지? 여기서 뭘 한 거야?");
+            checkRoomProgress();
+        } else if (target === 'ceiling') {
+            document.getElementById('scene-room').style.pointerEvents = "none";
+            queueDialogue([
+                { text: "천장에 붉게 번쩍이는 렌즈가...? 저건 초소형 몰카잖아!" },
+                { text: "거기 누구야?! 거기 숨어서 몰카 설치하는 거 다 알아!!!" }
+            ]);
+            const checkEnd = setInterval(() => {
+                if (!isTyping && dialogueQueue.length === 0 && !vnBox.classList.contains('show')) {
+                    clearInterval(checkEnd); triggerHitEvent();
+                }
+            }, 500);
+        }
+    }
+    function checkRoomProgress() {
+        roomItemsFound++;
+        if (roomItemsFound >= 2) setTimeout(() => document.getElementById('hs-ceiling').classList.add('active'), 1000);
+    }
+
+    /* ── 엔딩 ── */
+    function triggerHitEvent() {
+        const container = document.getElementById('game-container');
+        const endSeq = document.getElementById('end-sequence');
+        const crack = document.getElementById('glass-crack');
+        const endText = document.getElementById('end-text');
+        if (bgmGain) bgmGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        playScream();
+        container.classList.add('shake-hard');
+        endSeq.classList.add('hit'); crack.style.opacity = "1";
+        setTimeout(() => {
+            endSeq.classList.add('fade-out');
+            endText.style.transition = "opacity 2.5s ease-in"; endText.style.opacity = "1";
+        }, 600);
+    }
+
+    window.onload = () => {
+        setTimeout(() => {
+            queueDialogue([
+                { text: "(숨을 죽이며 조심스럽게 다가간다. 들키면 안 돼...)" },
+                { text: "김연정... 감히 우리 <em>차강혁</em> 오빠를 꼬셔?" },
+                { text: "이 301호 안에서 무슨 짓을 벌이는지, 내 두 눈으로 확인해주겠어." },
+                { text: "문이 잠겨있군. 어제 숨겨둔 <em>장비들</em>부터 챙기자." }
+            ]);
+        }, 500);
+    };
+</script>
+</body>
+</html>
