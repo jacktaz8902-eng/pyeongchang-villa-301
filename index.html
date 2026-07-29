@@ -24,6 +24,7 @@
         --ok:        #46e0a0;
         --cursor-x: 50vw;
         --cursor-y: 50vh;
+        --light-r: 46vw;
         --safe-t: env(safe-area-inset-top, 0px);
         --safe-b: env(safe-area-inset-bottom, 0px);
     }
@@ -52,7 +53,8 @@
         background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         mix-blend-mode: overlay;
     }
-    #vignette { position: absolute; inset: 0; pointer-events: none; z-index: 9997; box-shadow: inset 0 0 160px rgba(0,0,0,0.95); }
+    #vignette { position: absolute; inset: 0; pointer-events: none; z-index: 9997; box-shadow: inset 0 0 160px rgba(0,0,0,0.95); transition: box-shadow 1.5s ease; }
+    #game-container.in-room #vignette { box-shadow: inset 0 0 90px rgba(0,0,0,0.75); }
 
     /* ══════════ 씬: 복도 ══════════ */
     #scene-hallway {
@@ -318,24 +320,217 @@
     /* ══════════ 씬: 방 내부 ══════════ */
     #scene-room { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none;
         overflow: hidden; transition: opacity 1.8s ease; }
-    .room-bg { position: absolute; inset: -5%; background: linear-gradient(#060608, #000); }
+    .room-bg { position: absolute; inset: 0;
+        background: linear-gradient(#0b0c11 0%, #07080c 55%, #030304 100%); }
+    .rm-floor { position: absolute; bottom: 0; left: 0; width: 100%; height: 32%;
+        background: repeating-linear-gradient(90deg, #23262f 0, #23262f 34px, #14161d 34px, #14161d 36px);
+        transform: perspective(520px) rotateX(70deg); transform-origin: bottom; opacity: 0.95; }
+    .rm-base { position: absolute; bottom: 32%; left: 0; width: 100%; height: 5px;
+        background: linear-gradient(#31353f, #0d0e12); box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+
+    /* ── 가구 (컨테이너 기준 %로 배치 → 핫스팟과 정확히 정렬) ── */
     .room-furniture { position: absolute; }
-    .rf-bed    { bottom: 12%; left: 6%;  width: 52vw; max-width: 250px; height: 15vh; background: #111; border: 1px solid #222; border-radius: 10px; transform: perspective(600px) rotateX(40deg); box-shadow: 0 20px 50px #000; }
-    .rf-closet { top: 12%; right: 6%; width: 30vw; max-width: 150px; height: 46vh; background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 5px; box-shadow: inset 10px 0 20px #000; }
-    .rf-table  { bottom: 28%; right: 34%; width: 40vw; max-width: 180px; height: 10vh; background: #0d0d0d; border: 1px solid #222; transform: perspective(400px) rotateX(50deg); box-shadow: 0 30px 40px #000; }
+
+    .rf-window { top: 8%; left: 5%; width: 33%; height: 19%;
+        background: linear-gradient(165deg, #1a2740 0%, #0a1020 70%);
+        border: 7px solid #1c1f28; border-radius: 3px;
+        box-shadow: inset 0 0 34px #000, 0 0 26px rgba(110,140,200,0.07); }
+    .rf-window::before { content:''; position:absolute; top:0; bottom:0; left:50%; width:5px; margin-left:-2px; background:#1c1f28; }
+    .rf-window::after  { content:''; position:absolute; left:0; right:0; top:50%; height:5px; margin-top:-2px; background:#1c1f28; }
+    .rf-blind { position:absolute; inset:0; z-index:2;
+        background: repeating-linear-gradient(0deg, rgba(35,39,49,0.95) 0, rgba(35,39,49,0.95) 7px, rgba(74,80,96,0.6) 7px, rgba(74,80,96,0.6) 9px);
+        clip-path: polygon(0 0, 100% 0, 100% 60%, 0 73%); }
+
+    .rf-frame { top: 10%; left: 44%; width: 15%; height: 13%;
+        background: linear-gradient(150deg, #2d2519, #100e0a); border: 3px solid #3d3426; border-radius: 2px;
+        box-shadow: 0 8px 18px rgba(0,0,0,0.9), inset 0 0 14px #000; }
+    .rf-frame::before { content:''; position:absolute; inset:13%;
+        background: linear-gradient(160deg, #3c4254, #181b23); }
+
+    .rf-closet { top: 6%; left: 66%; width: 29%; height: 42%;
+        background: linear-gradient(100deg, #1c1e26, #101118 55%, #23252e);
+        border: 1px solid #2a2c36; border-radius: 4px; overflow: hidden;
+        box-shadow: inset 14px 0 30px #000, 0 22px 44px #000; transition: background 0.8s; }
+    .rf-closet::before { content:''; position:absolute; top:0; bottom:0; left:50%; width:2px; background:#000; }
+    .rf-closet::after { content:''; position:absolute; top:46%; left:calc(50% - 13px); width:8px; height:26px; border-radius:4px;
+        background: linear-gradient(#7e828b, #34373d); box-shadow: 1px 2px 5px #000; transition: opacity 0.6s; }
+    .rf-closet.opened { background: linear-gradient(100deg, #131419, #050506 62%); }
+    .rf-closet.opened::after { opacity: 0; }
+    .rf-hole { position:absolute; right:12%; bottom:14%; width:50%; height:36%; opacity:0; transition:opacity 1s;
+        background: radial-gradient(ellipse at 50% 50%, #000 52%, rgba(0,0,0,0.25) 76%, transparent 100%);
+        border-radius: 44% 56% 52% 48%;
+        box-shadow: 0 0 0 2px rgba(200,200,200,0.22), inset 0 0 22px #000; }
+    .rf-closet.opened .rf-hole { opacity: 1; }
+
+    .rf-vanity { top: 34%; left: 4%; width: 30%; height: 26%; }
+    .rf-mirror { position:absolute; top:0; left:8%; width:84%; height:62%;
+        background: linear-gradient(150deg, rgba(104,120,152,0.32), rgba(14,17,24,0.92) 62%);
+        border: 3px solid #262a33; border-radius: 60% 60% 6px 6px;
+        box-shadow: inset 0 0 26px rgba(0,0,0,0.9), 0 0 20px rgba(120,150,200,0.05); }
+    .rf-vtop { position:absolute; bottom:24%; left:0; width:100%; height:9%;
+        background: linear-gradient(#282c36, #111318); box-shadow: 0 6px 14px rgba(0,0,0,0.9); }
+    .rf-vleg { position:absolute; bottom:0; width:7%; height:24%; background: linear-gradient(#212530, #0e1014); }
+
+    .rf-desk { top: 57%; left: 58%; width: 38%; height: 14%; }
+    .rf-dtop { position:absolute; top:0; left:0; width:100%; height:20%;
+        background: linear-gradient(#272b34, #111318); box-shadow: 0 8px 20px rgba(0,0,0,0.9); }
+    .rf-dbody { position:absolute; top:20%; left:6%; width:88%; height:80%;
+        background: linear-gradient(#1c1e26, #0f1014); border:1px solid #2b2e38; }
+    .rf-dbody::before, .rf-dbody::after { content:''; position:absolute; left:10%; width:80%; height:3px;
+        background:#000; box-shadow: 0 1px 0 rgba(255,255,255,0.05); }
+    .rf-dbody::before { top:28%; } .rf-dbody::after { top:62%; }
+    .rf-laptop { position:absolute; top:-17%; left:12%; width:46%; height:20%; opacity:0; transition:opacity 0.7s;
+        background: linear-gradient(#333844, #15171d); border-radius:2px;
+        transform: perspective(220px) rotateX(-16deg); transform-origin: bottom;
+        box-shadow: 0 -3px 14px rgba(90,160,255,0.10); }
+    .rf-laptop.on { opacity: 1; }
+
+    .rf-bed { top: 63%; left: 3%; width: 50%; height: 21%; }
+    .rf-mat { position:absolute; bottom:26%; left:0; width:100%; height:52%;
+        background: linear-gradient(#252935, #14161d); border:1px solid #30343f; border-radius:6px;
+        box-shadow: 0 18px 34px #000, inset 0 2px 0 rgba(255,255,255,0.04); }
+    .rf-pillow { position:absolute; bottom:50%; left:6%; width:30%; height:20%;
+        background: linear-gradient(#2e3340, #191c24); border-radius:9px; box-shadow: 0 4px 10px rgba(0,0,0,0.8); }
+    .rf-bedleg { position:absolute; bottom:6%; width:6%; height:20%; background:#14161b; }
+
+    .rf-bin { top: 72%; left: 50%; width: 11%; height: 12%;
+        background: linear-gradient(#272b34, #121419); border:1px solid #363a45;
+        clip-path: polygon(8% 0, 92% 0, 82% 100%, 18% 100%);
+        box-shadow: inset 0 0 12px #000, 0 10px 18px rgba(0,0,0,0.85); }
+
+    .rf-shoes { top: 77%; left: 68%; width: 20%; height: 7%; }
+    .rf-shoe { position:absolute; bottom:0; width:46%; height:100%;
+        background: linear-gradient(160deg, #2b2d36, #111217); border-radius: 42% 12% 8% 46%;
+        box-shadow: 0 6px 12px rgba(0,0,0,0.9), inset 0 2px 3px rgba(255,255,255,0.05); }
+
+    /* ── 손전등 · 암전 · UV ── */
     #room-flashlight { position: absolute; inset: 0; z-index: 10; pointer-events: none;
-        background: radial-gradient(circle 42vw at var(--cursor-x) var(--cursor-y), transparent 0%, rgba(0,0,0,0.82) 32%, #000 100%); }
-    .room-hs { position: absolute; z-index: 15; width: 64px; height: 64px; }
+        background: radial-gradient(circle var(--light-r) at var(--cursor-x) var(--cursor-y),
+            rgba(0,0,0,0) 0%, rgba(0,0,0,0.32) 52%, rgba(0,0,0,0.84) 76%, rgba(0,0,0,0.97) 100%); }
+    #room-blackout { position: absolute; inset: 0; z-index: 11; pointer-events: none; background: #000; opacity: 0; }
+    #scene-room.lowbat #room-blackout { animation: batFlicker 2.8s infinite; }
+    @keyframes batFlicker { 0%,70%,100%{opacity:0;} 72%{opacity:0.78;} 74%{opacity:0;} 86%{opacity:0.92;} 88%{opacity:0;} }
+    #scene-room.blackout #room-blackout { opacity: 1; animation: none; }
+
+    #room-uv { position: absolute; inset: 0; z-index: 12; pointer-events: none; opacity: 0; transition: opacity 0.45s;
+        background: radial-gradient(circle var(--light-r) at var(--cursor-x) var(--cursor-y),
+            rgba(120,45,235,0.55) 0%, rgba(45,10,95,0.34) 46%, rgba(0,0,0,0) 74%);
+        mix-blend-mode: screen; }
+    #scene-room.uv #room-uv { opacity: 1; }
+    .uv-mark { position: absolute; z-index: 13; opacity: 0; pointer-events: none; transition: opacity 0.5s;
+        font-family: 'Nanum Pen Script', cursive; color: #fff; line-height: 1.25;
+        text-shadow: 0 0 6px #fff, 0 0 14px var(--uv), 0 0 30px var(--uv), 0 0 55px var(--uv); }
+    #scene-room.uv .uv-mark { opacity: 1; }
+    #uvm-hands { background:
+        radial-gradient(circle 15px at 20% 26%, rgba(255,255,255,0.55), transparent 70%),
+        radial-gradient(circle 13px at 58% 52%, rgba(255,255,255,0.45), transparent 70%),
+        radial-gradient(circle 11px at 36% 82%, rgba(255,255,255,0.40), transparent 70%),
+        radial-gradient(circle 10px at 78% 20%, rgba(255,255,255,0.35), transparent 70%);
+        filter: drop-shadow(0 0 10px var(--uv)); }
+    #uvm-steps { background: repeating-linear-gradient(90deg, rgba(255,255,255,0.45) 0 11px, transparent 11px 48px);
+        -webkit-mask-image: linear-gradient(90deg, #000, rgba(0,0,0,0.12));
+        mask-image: linear-gradient(90deg, #000, rgba(0,0,0,0.12));
+        filter: drop-shadow(0 0 8px var(--uv)); }
+
+    /* ── 조사 핫스팟 ── */
+    .room-hs { position: absolute; z-index: 15; width: 66px; height: 66px;
+        transform: translate(-50%,-50%); border-radius: 50%; }
+    .room-hs.hidden { display: none; }
+    .room-hs.done { display: none; }
+    .room-hs:active { background: rgba(216,184,119,0.10); }
     .glint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 6px; height: 6px;
         background: #fff; border-radius: 50%; box-shadow: 0 0 15px 5px rgba(255,255,255,0.5);
         animation: twinkle 1.5s infinite alternate; pointer-events: none; }
     @keyframes twinkle { 0%{opacity:0.1; transform:translate(-50%,-50%) scale(0.5);} 100%{opacity:1; transform:translate(-50%,-50%) scale(1.5);} }
-    #hs-shoes   { bottom: 20%; left: 30%; }
-    #hs-table   { bottom: 30%; right: 40%; }
-    #hs-ceiling { top: 16%; left: 45%; opacity: 0; pointer-events: none; transition: opacity 1s; }
-    #hs-ceiling.active { opacity: 1; pointer-events: auto; }
     .red-glint { background: #ff1414; box-shadow: 0 0 25px 10px rgba(255,0,0,0.8); animation: redBlink 0.5s infinite alternate; }
     @keyframes redBlink { 0%{opacity:0.2;} 100%{opacity:1;} }
+
+    /* ── 방 HUD (배터리 / 소음 / 진실) ── */
+    #room-hud { position: absolute; top: calc(var(--safe-t) + 10px); left: 10px; right: 10px; z-index: 70;
+        display: none; gap: 7px; }
+    .meter { flex: 1; padding: 6px 8px; border-radius: 11px; background: var(--panel);
+        border: 1px solid var(--line); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.5); }
+    .mlab { display: flex; justify-content: space-between; align-items: baseline; gap: 4px;
+        font-size: 0.54rem; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 5px; white-space: nowrap; }
+    .mlab b { color: var(--text); font-weight: 600; font-size: 0.6rem; letter-spacing: 0; }
+    .mbar { height: 4px; border-radius: 3px; background: #000; overflow: hidden; box-shadow: inset 0 0 5px #000; }
+    .mfill { height: 100%; width: 100%; border-radius: 3px; transition: width 0.25s linear; }
+    #bat-fill { background: linear-gradient(90deg, var(--ok), var(--gold)); }
+    #bat-fill.low { background: linear-gradient(90deg, var(--blood), var(--blood-soft)); }
+    #noise-fill { width: 0; background: linear-gradient(90deg, #4b7be3, var(--blood)); }
+    #clue-fill { width: 0; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); }
+    .meter.alert { border-color: rgba(192,57,43,0.6); animation: alertPulse 0.9s ease-in-out 3; }
+    @keyframes alertPulse { 0%,100%{box-shadow:0 6px 16px rgba(0,0,0,0.5);} 50%{box-shadow:0 0 18px rgba(192,57,43,0.7);} }
+
+    #uv-toggle { position: absolute; top: calc(var(--safe-t) + 64px); right: 10px; z-index: 70;
+        width: 54px; height: 54px; border-radius: 50%; display: none; flex-direction: column; gap: 2px;
+        align-items: center; justify-content: center; font-family: inherit; font-size: 0.5rem; letter-spacing: 0.06em;
+        color: var(--muted); background: var(--panel); border: 1px solid var(--line-2);
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 6px 16px rgba(0,0,0,0.6); }
+    #uv-toggle svg { width: 19px; height: 19px; opacity: 0.6; }
+    #uv-toggle.on { background: #2a0845; border-color: var(--uv); color: #fff; box-shadow: 0 0 20px rgba(176,108,255,0.55); }
+    #uv-toggle.on svg { opacity: 1; }
+
+    #room-toast { position: absolute; left: 12%; right: 12%; top: 38%; z-index: 80; text-align: center;
+        font-family: 'Gowun Batang', serif; color: #e9dcc6; font-size: 0.94rem; line-height: 1.65;
+        opacity: 0; pointer-events: none; transition: opacity 0.6s; word-break: keep-all;
+        text-shadow: 0 2px 10px #000, 0 0 22px rgba(0,0,0,0.95); }
+    #room-toast.show { opacity: 1; }
+
+    /* ── 숨기 QTE ── */
+    #qte { position: absolute; inset: 0; z-index: 420; display: none; flex-direction: column;
+        align-items: center; justify-content: center; gap: 13px; padding: 26px;
+        background: radial-gradient(circle at 50% 42%, rgba(70,0,0,0.55), rgba(0,0,0,0.95) 72%); }
+    #qte.show { display: flex; animation: fadeIn 0.18s ease; }
+    @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+    #qte-title { margin: 0 0 2px; font-family: 'Gowun Batang', serif; color: #ff7a6b; font-size: 1.12rem;
+        line-height: 1.6; text-align: center; word-break: keep-all; text-shadow: 0 0 16px rgba(192,57,43,0.7); }
+    #qte-bar { width: 88%; max-width: 340px; height: 7px; border-radius: 4px; background: #150607;
+        overflow: hidden; box-shadow: inset 0 0 8px #000; }
+    #qte-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #e07a6b, #c0392b); }
+    #qte-sub { color: var(--muted); font-size: 0.7rem; letter-spacing: 0.08em; margin-bottom: 4px; }
+    .qte-choice { width: 88%; max-width: 340px; padding: 15px 12px; border-radius: 12px; font-family: inherit;
+        font-size: 0.96rem; font-weight: 500; color: #ddd; background: linear-gradient(#1c1f26, #0d0e12);
+        border: 1px solid #33363f; box-shadow: 0 6px 14px rgba(0,0,0,0.7); }
+    .qte-choice:active { background: #2a0c0c; color: #fff; }
+
+    /* ── 방 안 모달 (노트북 / 편지) ── */
+    .rmodal { position: absolute; inset: 0; z-index: 360; display: none; align-items: center; justify-content: center;
+        padding: 20px; background: rgba(0,0,0,0.88); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); }
+    .rmodal.show { display: flex; }
+    .rbox { width: 100%; max-width: 360px; border-radius: 16px; padding: 20px 18px calc(18px + var(--safe-b));
+        background: linear-gradient(160deg, #171a21, #0a0b0e); border: 1px solid var(--line-2);
+        box-shadow: 0 24px 60px rgba(0,0,0,1); }
+    .rtitle { margin: 0 0 12px; text-align: center; font-family: 'Gowun Batang', serif;
+        color: var(--gold); font-size: 1.02rem; letter-spacing: 0.08em; }
+    #lap-disp { height: 52px; margin-bottom: 12px; border-radius: 9px; background: #02060a; border: 1px solid #12161c;
+        display: flex; align-items: center; justify-content: center; color: #6fd2ff;
+        font-family: 'Courier New', monospace; font-size: 1.7rem; letter-spacing: 12px; padding-left: 12px;
+        box-shadow: inset 0 0 12px rgba(60,180,255,0.15); }
+    #lap-hint { text-align: center; color: var(--muted); font-size: 0.74rem; margin: 0 0 12px; line-height: 1.55; word-break: keep-all; }
+    .letter-paper { background: linear-gradient(#efe9dc, #ded6c4); color: #231f1a; border-radius: 5px;
+        padding: 20px 18px; font-family: 'Nanum Pen Script', cursive; font-size: 1.14rem; line-height: 1.8;
+        max-height: 52vh; overflow-y: auto; word-break: keep-all;
+        box-shadow: inset 0 0 30px rgba(120,100,70,0.35), 0 14px 30px rgba(0,0,0,0.9); }
+    .letter-paper b { color: #7a1b12; }
+    .tear { display: block; height: 1px; margin: 13px 0;
+        background: repeating-linear-gradient(90deg, #b3a68c 0 7px, transparent 7px 12px); }
+
+    /* ── 엔딩 카드 ── */
+    #end-card { position: absolute; inset: 0; z-index: 10000; display: none; flex-direction: column;
+        align-items: center; justify-content: center; gap: 13px; text-align: center;
+        padding: 30px 24px calc(30px + var(--safe-b)); background: #000; }
+    #end-card.show { display: flex; animation: fadeIn 1.4s ease; }
+    #ec-tag { font-size: 0.66rem; letter-spacing: 0.32em; color: var(--muted); }
+    #ec-title { margin: 0; font-family: 'Gowun Batang', serif; font-size: 1.55rem; letter-spacing: 0.05em; word-break: keep-all; }
+    #ec-body { margin: 0; color: #c9c6bf; font-size: 0.9rem; line-height: 1.9; word-break: keep-all; max-width: 340px; }
+    #ec-stat { font-size: 0.7rem; color: var(--gold-dim); letter-spacing: 0.1em; margin-bottom: 6px; }
+    .ec-btn { width: 100%; max-width: 300px; padding: 14px; border-radius: 12px; font-family: inherit;
+        font-size: 0.94rem; font-weight: 600; letter-spacing: 0.05em; border: 1px solid var(--line-2);
+        color: var(--text); background: linear-gradient(#1c1f26, #0d0e12); }
+    .ec-btn.primary { background: var(--gold); color: #0a0a0a; border-color: var(--gold); }
+    .ec-btn:active { filter: brightness(0.85); }
 
     /* ══════════ 엔딩 ══════════ */
     #end-sequence { position: absolute; inset: 0; z-index: 9999; pointer-events: none; opacity: 0;
@@ -420,14 +615,132 @@
     <!-- 씬 2: 방 내부 -->
     <div id="scene-room">
         <div class="room-bg">
-            <div class="room-furniture rf-bed"></div>
-            <div class="room-furniture rf-closet"></div>
-            <div class="room-furniture rf-table"></div>
+            <div class="rm-floor"></div>
+            <div class="rm-base"></div>
+
+            <div class="room-furniture rf-window"><div class="rf-blind"></div></div>
+            <div class="room-furniture rf-frame"></div>
+            <div class="room-furniture rf-closet"><div class="rf-hole"></div></div>
+            <div class="room-furniture rf-vanity">
+                <div class="rf-mirror"></div><div class="rf-vtop"></div>
+                <div class="rf-vleg" style="left:6%"></div><div class="rf-vleg" style="right:6%"></div>
+            </div>
+            <div class="room-furniture rf-desk">
+                <div class="rf-laptop"></div><div class="rf-dtop"></div><div class="rf-dbody"></div>
+            </div>
+            <div class="room-furniture rf-bed">
+                <div class="rf-mat"></div><div class="rf-pillow"></div>
+                <div class="rf-bedleg" style="left:4%"></div><div class="rf-bedleg" style="right:4%"></div>
+            </div>
+            <div class="room-furniture rf-bin"></div>
+            <div class="room-furniture rf-shoes">
+                <div class="rf-shoe" style="left:0"></div><div class="rf-shoe" style="right:0"></div>
+            </div>
         </div>
+
         <div id="room-flashlight"></div>
-        <div class="room-hs" id="hs-shoes" onclick="interactRoom('shoes')"><div class="glint"></div></div>
-        <div class="room-hs" id="hs-table" onclick="interactRoom('table')"><div class="glint"></div></div>
-        <div class="room-hs" id="hs-ceiling" onclick="interactRoom('ceiling')"><div class="glint red-glint"></div></div>
+        <div id="room-blackout"></div>
+        <div id="room-uv"></div>
+
+        <!-- UV로만 보이는 흔적 -->
+        <div class="uv-mark" id="uvm-wall" style="top:51%;left:60%;width:34%;font-size:clamp(0.95rem,4.4vw,1.45rem);transform:rotate(-6deg);">나는<br>벽으로<br>다녀</div>
+        <div class="uv-mark" id="uvm-arrow" style="top:53%;left:17%;width:24%;text-align:center;font-size:clamp(1.4rem,6.5vw,2.1rem);">↑<div style="font-size:0.5em;line-height:1.3;">여기서<br>본다</div></div>
+        <div class="uv-mark" id="uvm-hands" style="top:34%;left:5%;width:28%;height:17%;"></div>
+        <div class="uv-mark" id="uvm-steps" style="top:80%;left:14%;width:66%;height:5%;"></div>
+
+        <!-- 조사 지점 -->
+        <div class="room-hs" id="rhs-window"  style="left:21.5%;top:17.5%" onclick="interactRoom('window')"><div class="glint"></div></div>
+        <div class="room-hs" id="rhs-frame"   style="left:51.5%;top:16.5%" onclick="interactRoom('frame')"><div class="glint"></div></div>
+        <div class="room-hs" id="rhs-closet"  style="left:80%;top:27%"     onclick="interactRoom('closet')"><div class="glint"></div></div>
+        <div class="room-hs" id="rhs-mirror"  style="left:19%;top:45%"     onclick="interactRoom('mirror')"><div class="glint"></div></div>
+        <div class="room-hs" id="rhs-desk"    style="left:85%;top:65%"     onclick="interactRoom('desk')"><div class="glint"></div></div>
+        <div class="room-hs" id="rhs-bed"     style="left:25%;top:71%"     onclick="interactRoom('bed')"><div class="glint"></div></div>
+        <div class="room-hs" id="rhs-bin"     style="left:55.5%;top:78%"   onclick="interactRoom('bin')"><div class="glint"></div></div>
+        <div class="room-hs" id="rhs-shoes"   style="left:78%;top:81%"     onclick="interactRoom('shoes')"><div class="glint"></div></div>
+        <!-- 조건부로 등장 -->
+        <div class="room-hs hidden" id="rhs-laptop"  data-spawn="1" style="left:68%;top:55%" onclick="interactRoom('laptop')"><div class="glint"></div></div>
+        <div class="room-hs hidden" id="rhs-phone"   data-spawn="1" style="left:43%;top:66%" onclick="interactRoom('phone')"><div class="glint"></div></div>
+        <div class="room-hs hidden" id="rhs-box"     data-spawn="1" style="left:20%;top:82%" onclick="interactRoom('box')"><div class="glint"></div></div>
+        <div class="room-hs hidden" id="rhs-ceiling" data-spawn="1" style="left:33%;top:10%"  onclick="interactRoom('ceiling')"><div class="glint red-glint"></div></div>
+
+        <div id="room-toast"></div>
+    </div>
+
+    <!-- 방 HUD -->
+    <div id="room-hud">
+        <div class="meter" id="m-bat">
+            <div class="mlab"><span>손전등</span><b id="bat-val">100%</b></div>
+            <div class="mbar"><div class="mfill" id="bat-fill"></div></div>
+        </div>
+        <div class="meter" id="m-noise">
+            <div class="mlab"><span>소음</span><b id="noise-val">0</b></div>
+            <div class="mbar"><div class="mfill" id="noise-fill"></div></div>
+        </div>
+        <div class="meter" id="m-clue">
+            <div class="mlab"><span>진실</span><b id="clue-val">0/11</b></div>
+            <div class="mbar"><div class="mfill" id="clue-fill"></div></div>
+        </div>
+    </div>
+    <button id="uv-toggle" onclick="toggleRoomUV()">
+        <svg viewBox="0 0 100 100"><rect x="35" y="40" width="30" height="45" fill="#3a3d45" rx="4"/><rect x="40" y="26" width="20" height="14" fill="#15161a"/><path d="M40,26 L28,2 L72,2 L60,26 Z" fill="rgba(176,108,255,0.95)"/></svg>
+        UV
+    </button>
+
+    <!-- 숨기 QTE -->
+    <div id="qte">
+        <h3 id="qte-title"></h3>
+        <div id="qte-bar"><div id="qte-fill"></div></div>
+        <div id="qte-sub"></div>
+        <button class="qte-choice" onclick="qtePick('bed')">침대 밑으로 기어든다</button>
+        <button class="qte-choice" onclick="qtePick('closet')">옷장 안에 숨는다</button>
+        <button class="qte-choice" onclick="qtePick('curtain')">커튼 뒤에 붙는다</button>
+    </div>
+
+    <!-- 노트북 잠금 -->
+    <div class="rmodal" id="lap-modal">
+        <div class="rbox">
+            <h3 class="rtitle">검은 노트북 · 잠김</h3>
+            <div id="lap-disp">____</div>
+            <p id="lap-hint"></p>
+            <div class="kp-grid">
+                <button class="kp-btn" onclick="lapKey('1')">1</button>
+                <button class="kp-btn" onclick="lapKey('2')">2</button>
+                <button class="kp-btn" onclick="lapKey('3')">3</button>
+                <button class="kp-btn" onclick="lapKey('4')">4</button>
+                <button class="kp-btn" onclick="lapKey('5')">5</button>
+                <button class="kp-btn" onclick="lapKey('6')">6</button>
+                <button class="kp-btn" onclick="lapKey('7')">7</button>
+                <button class="kp-btn" onclick="lapKey('8')">8</button>
+                <button class="kp-btn" onclick="lapKey('9')">9</button>
+                <button class="kp-btn" onclick="lapDel()">←</button>
+                <button class="kp-btn" onclick="lapKey('0')">0</button>
+                <button class="kp-btn kp-enter" onclick="lapEnter()">↵</button>
+            </div>
+            <button class="ec-btn" style="margin-top:12px;" onclick="closeLap()">덮는다</button>
+        </div>
+    </div>
+
+    <!-- 맞춰진 편지 -->
+    <div class="rmodal" id="letter-modal">
+        <div class="rbox">
+            <h3 class="rtitle">맞춰진 편지 · 3 / 3</h3>
+            <div class="letter-paper">
+                누가 이걸 읽는다면.<br>
+                나는 평창빌라 301호 김연정입니다.
+                <span class="tear"></span>
+                누군가 매일 내 방에 들어옵니다.<br>
+                자물쇠를 바꿔도, 비밀번호를 바꿔도 소용없었어요.<br>
+                그 사람은 <b>문으로 오지 않습니다.</b><br>
+                벽으로, 천장으로 옵니다.
+                <span class="tear"></span>
+                밤마다 천장에서 붉은 빛이 깜빡입니다.<br>
+                경찰은 증거를 가져오라고 했습니다.<br>
+                그래서 그 빛을 찍어두려고 합니다.<br><br>
+                혹시 내가 사라지면 —<br>
+                <b>천장을 봐 주세요.</b>
+            </div>
+            <button class="ec-btn primary" style="margin-top:16px;" onclick="closeLetter()">편지를 접는다</button>
+        </div>
     </div>
 
     <div id="overlay" onclick="closeKeypad()"></div>
@@ -487,6 +800,16 @@
         </svg>
         <div id="end-text">머리를 강타당했다...<br><br>의식이 멀어진다...</div>
     </div>
+
+    <!-- 엔딩 카드 -->
+    <div id="end-card">
+        <div id="ec-tag"></div>
+        <h2 id="ec-title"></h2>
+        <p id="ec-body"></p>
+        <div id="ec-stat"></div>
+        <button class="ec-btn primary" id="ec-retry" onclick="restartRoom()">이 방부터 다시</button>
+        <button class="ec-btn" onclick="location.reload()">처음부터 다시</button>
+    </div>
 </div>
 
 <script>
@@ -500,7 +823,7 @@
     const speakerEl = document.getElementById('speaker');
     const dialogueEl = document.getElementById('dialogue');
     let isTyping = false, typeInterval, currentFullText = "", dialogueQueue = [];
-    let isRoomScene = false, roomItemsFound = 0;
+    let isRoomScene = false;
 
     const svgIcons = {
         wire: '<svg viewBox="0 0 100 100"><path d="M30,80 Q50,20 70,80" fill="none" stroke="#a0a4a8" stroke-width="8" stroke-linecap="round"/></svg>',
@@ -565,14 +888,19 @@
             if (i >= tokens.length) { clearInterval(typeInterval); isTyping = false; }
         }, 35);
     }
-    function queueDialogue(texts) { dialogueQueue = texts; processQueue(); }
+    let dialogueDone = null;
+    function queueDialogue(texts, onDone) { dialogueQueue = texts.slice(); dialogueDone = onDone || null; processQueue(); }
     function processQueue() {
         if (dialogueQueue.length > 0) { const next = dialogueQueue.shift(); showText(next.text, next.speaker || "모주희"); }
-        else { vnBox.classList.remove('show'); }
+        else {
+            vnBox.classList.remove('show');
+            const cb = dialogueDone; dialogueDone = null;
+            if (cb) cb();
+        }
     }
     function skipOrNext() {
         if (isTyping) { clearInterval(typeInterval); dialogueEl.innerHTML = currentFullText; isTyping = false; }
-        else { if (dialogueQueue.length > 0) processQueue(); else vnBox.classList.remove('show'); }
+        else processQueue();
     }
 
     /* ── 팝업 ── */
@@ -685,62 +1013,503 @@
         }
     }
 
-    /* ── 방 내부 ── */
+    /* ══════════════════════════════════════════════════════════
+       씬 2: 301호 내부 — 오브젝트 로직
+       ────────────────────────────────────────────────────────
+       · 손전등 배터리 : 탐색 중에만 소모. 0 이 되면 암전 엔딩(1회 자비)
+       · 소음 게이지   : 시끄러운 조사일수록 상승 → 숨기 QTE 제한시간 단축
+       · 진실 게이지   : 11개 단서. 편지 3조각 + 노트북 + 휴대폰이 천장을 연다
+       ══════════════════════════════════════════════════════════ */
+    const CLUE_KEYS = ['shoes','window','frame','mirror','bed','box','bin','closet','desk','laptop','phone'];
+    const LAPTOP_PW = "0419";
+    const roomInit = {
+        battery:100, noise:0, uv:false, ended:false, found:{}, letters:0,
+        charger:false, knowsHole:false, frameHint:false, laptopSolved:false,
+        letterDone:false, letterPending:false, pendingQTE:false, qteCount:0,
+        mercy:false, warn1:false, warn2:false, uvSeen:false,
+        ceilingArmed:false, ceilingShown:false, lapInput:""
+    };
+    let room = Object.assign({}, roomInit, { found:{} });
+    let roomTick = null, qteTick = null, heartTick = null, toastTick = null;
+
+    /* ── 효과음 ── */
+    function tone(type, f0, f1, dur, vol) {
+        initAudio(); if (!audioCtx) return;
+        const t = audioCtx.currentTime;
+        const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = type; o.frequency.setValueAtTime(f0, t);
+        if (f1 && f1 !== f0) o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t + dur);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.linearRampToValueAtTime(vol, t + Math.min(0.04, dur * 0.3));
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t + dur + 0.02);
+    }
+    function noiseBurst(dur, vol, freq, q) {
+        initAudio(); if (!audioCtx) return;
+        const t = audioCtx.currentTime, len = Math.max(1, Math.floor(audioCtx.sampleRate * dur));
+        const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate), d = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+        const src = audioCtx.createBufferSource(); src.buffer = buf;
+        const f = audioCtx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q || 1;
+        const g = audioCtx.createGain(); g.gain.value = vol;
+        src.connect(f); f.connect(g); g.connect(audioCtx.destination); src.start(t);
+    }
+    function sfx(k) {
+        switch (k) {
+            case 'tap':    tone('square', 760, 700, 0.05, 0.05); break;
+            case 'pickup': tone('sine', 620, 1240, 0.28, 0.10); break;
+            case 'unlock': tone('square', 300, 900, 0.10, 0.07);
+                           setTimeout(() => tone('square', 900, 1500, 0.12, 0.07), 110); break;
+            case 'creak':  tone('sawtooth', 190, 72, 1.0, 0.045); break;
+            case 'thud':   tone('sine', 95, 26, 0.35, 0.5); noiseBurst(0.18, 0.12, 220, 0.7); break;
+            case 'cloth':  noiseBurst(0.5, 0.07, 900, 0.6); break;
+            case 'paper':  noiseBurst(0.35, 0.06, 2400, 0.9); break;
+            case 'static': noiseBurst(0.8, 0.05, 1600, 0.4); break;
+            case 'beep':   tone('square', 1200, 1200, 0.09, 0.09); break;
+            case 'error':  tone('sawtooth', 220, 110, 0.3, 0.10); break;
+            case 'alarm':  [0, 260, 520].forEach(d => setTimeout(() => tone('square', 1400, 1400, 0.13, 0.12), d)); break;
+        }
+    }
+    function startHeart(bpm) {
+        stopHeart();
+        const beat = () => { tone('sine', 72, 38, 0.15, 0.45); setTimeout(() => tone('sine', 64, 32, 0.12, 0.30), 160); };
+        beat(); heartTick = setInterval(beat, 60000 / bpm);
+    }
+    function stopHeart() { if (heartTick) { clearInterval(heartTick); heartTick = null; } }
+
+    /* ── 손전등 위치 (컨테이너 기준으로 보정) ── */
+    const gameContainer = document.getElementById('game-container');
+    function moveLight(cx, cy) {
+        if (!isRoomScene || room.ended) return;
+        const r = gameContainer.getBoundingClientRect();
+        document.documentElement.style.setProperty('--cursor-x', (cx - r.left) + 'px');
+        document.documentElement.style.setProperty('--cursor-y', (cy - r.top) + 'px');
+    }
+    function centerLight() {
+        const r = gameContainer.getBoundingClientRect();
+        document.documentElement.style.setProperty('--cursor-x', (r.width / 2) + 'px');
+        document.documentElement.style.setProperty('--cursor-y', (r.height * 0.52) + 'px');
+    }
+    document.addEventListener('mousemove', e => moveLight(e.clientX, e.clientY));
+    document.addEventListener('touchmove', e => { if (e.touches.length) moveLight(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+    document.addEventListener('touchstart', e => { if (e.touches.length) moveLight(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+
+    /* ── 방 루프 & HUD ── */
+    function roomBusy() {
+        return vnBox.classList.contains('show')
+            || document.getElementById('item-popup-overlay').classList.contains('show')
+            || document.getElementById('lap-modal').classList.contains('show')
+            || document.getElementById('letter-modal').classList.contains('show')
+            || document.getElementById('qte').classList.contains('show');
+    }
+    function startRoomLoop() {
+        clearInterval(roomTick);
+        roomTick = setInterval(() => {
+            if (room.ended) return;
+            if (!roomBusy()) {
+                room.battery -= room.uv ? 0.19 : 0.076;   // UV 는 배터리를 2.5배 먹는다
+                room.noise = Math.max(0, room.noise - 0.02);
+            }
+            if (room.battery <= 0) { room.battery = 0; updateHUD(); badEnd('dark'); return; }
+            updateHUD();
+        }, 200);
+    }
+    function stopRoomSystems() {
+        clearInterval(roomTick); roomTick = null;
+        clearInterval(qteTick); qteTick = null;
+        stopHeart();
+    }
+    function cluesFound() { return CLUE_KEYS.filter(k => room.found[k]).length; }
+    function updateHUD() {
+        const b = Math.max(0, Math.min(100, room.battery));
+        const batFill = document.getElementById('bat-fill');
+        batFill.style.width = b + '%';
+        batFill.classList.toggle('low', b < 28);
+        document.getElementById('bat-val').textContent = Math.round(b) + '%';
+        const n = Math.min(100, room.noise);
+        document.getElementById('noise-fill').style.width = n + '%';
+        document.getElementById('noise-val').textContent = Math.round(n);
+        const c = cluesFound();
+        document.getElementById('clue-fill').style.width = (c / CLUE_KEYS.length * 100) + '%';
+        document.getElementById('clue-val').textContent = c + '/' + CLUE_KEYS.length;
+
+        const rm = document.getElementById('scene-room');
+        rm.classList.toggle('lowbat', b < 28);
+        document.documentElement.style.setProperty('--light-r', (22 + b * 0.32) + 'vw');
+
+        const qteOpen = document.getElementById('qte').classList.contains('show');
+        if (b < 20 && b > 0 && !heartTick && !room.ended && !qteOpen) startHeart(96);
+        if (b >= 20 && heartTick && !qteOpen) stopHeart();
+    }
+    function roomToast(html, ms) {
+        const el = document.getElementById('room-toast');
+        el.innerHTML = html; el.classList.add('show');
+        clearTimeout(toastTick);
+        toastTick = setTimeout(() => el.classList.remove('show'), ms || 2600);
+    }
+    function flashMeter(id) {
+        const el = document.getElementById(id);
+        el.classList.remove('alert'); void el.offsetWidth; el.classList.add('alert');
+    }
+
     function enterRoom() {
         isRoomScene = true;
         document.getElementById('scene-hallway').style.opacity = "0";
         setTimeout(() => {
             document.getElementById('scene-hallway').style.display = "none";
-            const room = document.getElementById('scene-room');
-            room.style.opacity = "1"; room.style.pointerEvents = "auto";
-            showText("어둠 속에서 <em>반짝이는 것들</em>을 터치해서 조사해보자.");
+            document.getElementById('inventory').style.display = "none";
+            const rm = document.getElementById('scene-room');
+            rm.style.opacity = "1"; rm.style.pointerEvents = "auto";
+            document.getElementById('game-container').classList.add('in-room');
+            document.getElementById('room-hud').style.display = "flex";
+            document.getElementById('uv-toggle').style.display = "flex";
+            centerLight(); updateHUD(); startRoomLoop();
+            queueDialogue([
+                { text: "(문을 등으로 밀어 닫았다. 내 심장 소리가 너무 커.)" },
+                { text: "손전등 하나뿐이야. <em>화면을 문지르면</em> 빛이 따라온다." },
+                { text: "반짝이는 걸 눌러서 조사하자. 대신 — <em>소리를 내면 안 돼.</em>" }
+            ], roomNext);
         }, 1500);
     }
-    function updateFlashlight(x, y) {
-        if (isRoomScene) {
-            document.documentElement.style.setProperty('--cursor-x', x + 'px');
-            document.documentElement.style.setProperty('--cursor-y', y + 'px');
+
+    /* ── 진행 헬퍼 ── */
+    function markFound(k) {
+        room.found[k] = true;
+        const el = document.getElementById('rhs-' + k);
+        if (el) el.classList.add('done');
+        updateHUD();
+    }
+    function reveal(k) { const el = document.getElementById('rhs-' + k); if (el) el.classList.remove('hidden'); }
+    function gainLetter() { room.letters++; if (room.letters >= 3 && !room.letterDone) room.letterPending = true; }
+
+    function addNoise(n) {
+        room.noise = Math.min(120, room.noise + n);
+        updateHUD();
+        if (n >= 10) flashMeter('m-noise');
+        if (room.noise >= 42 && !room.warn1) {
+            room.warn1 = true;
+            setTimeout(() => { sfx('creak'); roomToast("어딘가에서 마룻바닥이 길게 울었다.<br>…나 말고, 누가 있어?", 3200); }, 900);
+        }
+        if (room.noise >= 75 && !room.warn2) {
+            room.warn2 = true;
+            setTimeout(() => { sfx('thud'); roomToast("쿵.<br>벽 <em>안쪽</em>에서 소리가 났다.", 3200); }, 1100);
         }
     }
-    document.addEventListener('mousemove', (e) => updateFlashlight(e.clientX, e.clientY));
-    document.addEventListener('touchmove', (e) => {
-        if (isRoomScene && e.touches.length > 0) updateFlashlight(e.touches[0].clientX, e.touches[0].clientY);
-    }, { passive: true });
 
-    function interactRoom(target) {
-        if (target === 'shoes') {
-            document.getElementById('hs-shoes').style.display = 'none';
-            showText("남성용 구두... 이거 강혁 오빠 구두잖아?! 용서 못해!!!");
-            checkRoomProgress();
-        } else if (target === 'table') {
-            document.getElementById('hs-table').style.display = 'none';
-            showText("테이블 밑에 하얀 가루와 드릴 밥이 떨어져 있지? 여기서 뭘 한 거야?");
-            checkRoomProgress();
-        } else if (target === 'ceiling') {
+    /* 대사가 끝날 때마다 다음 이벤트를 순서대로 처리 */
+    function roomNext() {
+        if (room.ended) return;
+        if (room.letterPending) { room.letterPending = false; room.letterDone = true; openLetter(); return; }
+        if (room.pendingQTE)    { room.pendingQTE = false; setTimeout(triggerQTE, 800); return; }
+        checkCeiling();
+    }
+    function checkCeiling() {
+        if (room.ceilingArmed || room.ended) return;
+        if (room.letterDone && room.laptopSolved && room.found.phone) {
+            room.ceilingArmed = true;
+            setTimeout(() => { if (room.qteCount < 2) triggerQTE(); else showCeiling(); }, 900);
+        }
+    }
+    function showCeiling() {
+        if (room.ceilingShown) return;
+        room.ceilingShown = true;
+        reveal('ceiling'); sfx('beep');
+        roomToast("천장 몰딩 틈에서<br><em>붉은 빛</em>이 규칙적으로 깜빡인다.", 4200);
+    }
+
+    /* ── 조사 ── */
+    function interactRoom(t) {
+        if (room.ended) return;
+        if (vnBox.classList.contains('show')) { skipOrNext(); return; }
+        sfx('tap');
+        switch (t) {
+
+        case 'shoes':
+            markFound('shoes'); addNoise(3);
+            queueDialogue([
+                { text: "현관 앞에 남성용 구두 한 켤레. …오빠 거지? 그렇지?" },
+                { text: "안창을 뒤집었다. <em>275</em>. 오빠는 260이야. 한 번도 틀린 적 없어." },
+                { text: "이 집에 드나드는 남자는 오빠가 아니야. <em>내가 모르는 남자</em>야." }
+            ], roomNext);
+            break;
+
+        case 'window':
+            markFound('window'); addNoise(6);
+            queueDialogue([
+                { text: "블라인드를 손끝으로 벌렸다. 맞은편 상가 옥상." },
+                { text: "…사람이 서 있어. 이 창을 정면으로 보고. 담뱃불이 붉게 흔들린다." },
+                { text: "창틀 걸쇠는 <em>바깥에서</em> 뜯겨 있다. 이 창가는 숨을 자리가 못 돼." }
+            ], roomNext);
+            break;
+
+        case 'frame':
+            markFound('frame'); room.frameHint = true; addNoise(3); sfx('paper');
+            queueDialogue([
+                { text: "연정이랑 강혁 오빠가 웃고 있는 사진. …꼴 보기 싫어." },
+                { text: "잠깐. 오빠 얼굴만 <em>오려 붙인</em> 거야. 인쇄 결이 달라. 누가 이런 짓을?" },
+                { text: "액자 뒤판을 뜯었다. 볼펜으로 꾹 눌러 쓴 네 자리 — <em>0 4 1 9</em>." }
+            ], roomNext);
+            break;
+
+        case 'mirror':
+            markFound('mirror'); addNoise(5);
+            queueDialogue([
+                { text: "화장대. 립스틱은 뚜껑도 안 닫혔고 파운데이션은 굳었다. 몇 주는 손도 안 댔어." },
+                { text: "서랍 안에 약통. <em>수면제</em> · 처방자 김연정 · 석 달 연속." },
+                { text: "잠드는 게 무서운 사람만 이렇게 먹어." },
+                { text: "거울이 유난히 뿌옇다. <em>UV 라이트</em>를 비추면 뭔가 보일지도." }
+            ], roomNext);
+            break;
+
+        case 'bed':
+            markFound('bed'); addNoise(12); sfx('cloth');
+            reveal('phone'); reveal('box');
+            queueDialogue([
+                { text: "이불을 걷었다. 시트가 축축해. 식은땀 자국이 사람 모양으로 남았어." },
+                { text: "베개 밑에서 <em>휴대폰</em>. 연정이 거야. 완전 방전." },
+                { text: "침대 밑에… 철제 상자. 자물쇠가 채워져 있다." }
+            ], roomNext);
+            break;
+
+        case 'box':
+            if (!inv.wire) { showText("자물쇠가 걸려 있다. 얇고 단단한 게 필요해."); return; }
+            markFound('box'); addNoise(18); sfx('unlock');
+            room.battery = Math.min(100, room.battery + 65); updateHUD(); flashMeter('m-bat');
+            gainLetter();
+            queueDialogue([
+                { text: "철사를 자물쇠 안으로 밀어 넣었다. …딸깍." },
+                { text: "호신용 스프레이 두 통. 여분 도어체인. 그리고 <em>건전지 한 묶음</em>." },
+                { text: "(손전등이 다시 밝아졌다.) 연정이는 이걸 <em>준비하고</em> 있었어. 무서워서." },
+                { text: "바닥에 접힌 종이 한 장. 급하게 쓴 손글씨. <em>편지 조각 1/3</em>" }
+            ], roomNext);
+            break;
+
+        case 'bin':
+            markFound('bin'); addNoise(8); sfx('paper');
+            gainLetter();
+            queueDialogue([
+                { text: "쓰레기통. 찢긴 처방전, 뜯긴 택배 송장 — 수취인 이름만 칼로 도려냈다." },
+                { text: "바닥에 종이 조각이 더 있다. 같은 손글씨. <em>편지 조각 2/3</em>" }
+            ], roomNext);
+            break;
+
+        case 'closet':
+            markFound('closet'); addNoise(26); sfx('creak');
+            room.knowsHole = true;
+            document.querySelector('.rf-closet').classList.add('opened');
+            gainLetter();
+            room.pendingQTE = (room.qteCount === 0);
+            queueDialogue([
+                { text: "옷장 문을 당겼다. 경첩이 길게 운다. …너무 시끄러웠어." },
+                { text: "여자 옷 사이에 남자 외투 하나. 담배 냄새가 배어 있어. 오빠는 담배 안 피워." },
+                { text: "주머니에서 종이 조각. <em>편지 조각 3/3</em>" },
+                { text: "…그리고 옷장 뒤판. 석고보드가 통째로 뜯겨 있다." },
+                { text: "<em>사람이 기어서 지나갈 만한 구멍</em>이 옆집 쪽으로 뚫려 있어.<br>여기 숨는 건 절대 안 돼." }
+            ], roomNext);
+            break;
+
+        case 'desk':
+            markFound('desk'); addNoise(10); room.charger = true;
+            document.querySelector('.rf-laptop').classList.add('on');
+            reveal('laptop');
+            queueDialogue([
+                { text: "책상 서랍. 전동 드릴, 하얀 가루가 잔뜩 묻은 장갑, 그리고 <em>휴대폰 충전기</em>." },
+                { text: "이 가루는 석고야. 벽을 뚫을 때 나오는." },
+                { text: "책상 위엔 노트북. 연정이 건 로즈골드였는데, 이건 <em>검은색</em>이야." }
+            ], roomNext);
+            break;
+
+        case 'laptop':
+            if (room.laptopSolved) { showLaptopFiles(); return; }
+            openLap();
+            break;
+
+        case 'phone':
+            if (!room.charger) { showText("완전 방전이야. 충전할 게 필요해. <em>책상</em>부터 뒤져보자."); return; }
+            markFound('phone'); addNoise(4); sfx('beep');
+            queueDialogue([
+                { text: "충전기를 꽂았다. 화면이 켜지고, 밀린 알림이 쏟아진다." },
+                { text: "모르는 번호 하나. 172통. <em>“오늘 파란 원피스 예쁘더라.”</em>" },
+                { text: "<em>“문 잠가도 소용없어. 나는 벽으로 다녀.”</em>" },
+                { text: "마지막 발신은 어제 새벽 3시 14분. 112. 통화 시간 <em>0초</em>." },
+                { text: "…연정아. 내가 너를 미워하는 동안, 넌 누구한테 쫓기고 있었던 거야." }
+            ], roomNext);
+            break;
+
+        case 'ceiling':
+            room.ended = true; stopRoomSystems();
             document.getElementById('scene-room').style.pointerEvents = "none";
             queueDialogue([
-                { text: "천장에 붉게 번쩍이는 렌즈가...? 저건 초소형 몰카잖아!" },
-                { text: "거기 누구야?! 거기 숨어서 몰카 설치하는 거 다 알아!!!" }
-            ]);
-            const checkEnd = setInterval(() => {
-                if (!isTyping && dialogueQueue.length === 0 && !vnBox.classList.contains('show')) {
-                    clearInterval(checkEnd); triggerHitEvent();
-                }
-            }, 500);
+                { text: "천장 몰딩 틈. 붉은 렌즈가 규칙적으로 깜빡인다. 연정이가 찍어두려던 게 이거였어." },
+                { text: "…근데 이상해. 렌즈가 침대를 안 봐." },
+                { text: "렌즈는 <em>옷장</em>을 향하고 있어. 감시자가 왜 자기 통로를 찍어두지?" },
+                { text: "아… 이건 감시 카메라가 아니라 <em>초인종</em>이구나.<br>누가 들어왔는지 알려주는." },
+                { text: "그럼 아까부터 계속, 내가 들어온 것도—" }
+            ], triggerHitEvent);
+            break;
         }
     }
-    function checkRoomProgress() {
-        roomItemsFound++;
-        if (roomItemsFound >= 2) setTimeout(() => document.getElementById('hs-ceiling').classList.add('active'), 1000);
+
+    /* ── UV 라이트 ── */
+    function toggleRoomUV() {
+        if (room.ended) return;
+        if (!inv.uv) { roomToast("UV 라이트가 없어.", 1800); return; }
+        room.uv = !room.uv;
+        document.getElementById('scene-room').classList.toggle('uv', room.uv);
+        document.getElementById('uv-toggle').classList.toggle('on', room.uv);
+        sfx('beep');
+        if (room.uv && !room.uvSeen) {
+            room.uvSeen = true;
+            const lines = [
+                { text: "(자외선이 방을 보랏빛으로 적신다. 대신 배터리가 훨씬 빨리 닳아.)" },
+                { text: "벽에, 바닥에, 거울에… <em>남의 흔적</em>이 잔뜩 떠올랐다." }
+            ];
+            if (room.found.mirror) lines.push({ text: "거울에 찍힌 손자국. 크고, 높아. 연정이 손이 절대 아니야." });
+            lines.push({ text: "바닥의 발자국은 <em>옷장에서 침대 쪽</em>으로 이어진다. 매일 밤, 몇 번이고." });
+            queueDialogue(lines, roomNext);
+        }
+    }
+
+    /* ── 노트북 잠금 ── */
+    function drawLap() { document.getElementById('lap-disp').textContent = (room.lapInput + "____").slice(0, 4); }
+    function openLap() {
+        room.lapInput = "";
+        document.getElementById('lap-disp').style.color = "#6fd2ff";
+        drawLap();
+        document.getElementById('lap-hint').innerHTML = room.frameHint
+            ? "액자 뒤에 눌러 쓴 네 자리가 떠오른다."
+            : "네 자리 비밀번호. 아무 숫자나 넣을 순 없어.<br>어딘가에 적어뒀을 텐데.";
+        document.getElementById('lap-modal').classList.add('show');
+    }
+    function closeLap() { document.getElementById('lap-modal').classList.remove('show'); }
+    function lapKey(n) { if (room.lapInput.length < 4) { room.lapInput += n; sfx('tap'); drawLap(); } }
+    function lapDel() { room.lapInput = room.lapInput.slice(0, -1); sfx('tap'); drawLap(); }
+    function lapEnter() {
+        const d = document.getElementById('lap-disp');
+        if (room.lapInput === LAPTOP_PW) {
+            sfx('unlock'); d.style.color = "#5dff9b"; d.textContent = "OPEN";
+            setTimeout(() => {
+                closeLap(); room.laptopSolved = true; markFound('laptop'); addNoise(4); showLaptopFiles();
+            }, 700);
+        } else {
+            sfx('error'); d.style.color = "var(--blood-soft)"; d.textContent = "ERR";
+            setTimeout(() => { room.lapInput = ""; d.style.color = "#6fd2ff"; drawLap(); }, 700);
+        }
+    }
+    function showLaptopFiles() {
+        sfx('static');
+        queueDialogue([
+            { text: "바탕화면에 폴더가 딱 하나. <em>YJ_CAM</em>" },
+            { text: "파일이 줄줄이 뜬다. YJ_CAM_001 … YJ_CAM_212. 날짜는 작년 가을부터." },
+            { text: "…전부 이 방이야. 자는 연정이. 씻고 나온 연정이. 이불 뒤집어쓰고 우는 연정이." },
+            { text: "찍은 건 연정이가 아니야. 연정이는 <em>찍힌 사람</em>이야." },
+            { text: "그럼 이 노트북은 누구 거지. 왜 아직 이 방에 있지." }
+        ], roomNext);
+    }
+
+    /* ── 편지 ── */
+    function openLetter() { sfx('paper'); document.getElementById('letter-modal').classList.add('show'); }
+    function closeLetter() { document.getElementById('letter-modal').classList.remove('show'); roomNext(); }
+
+    /* ── 숨기 QTE ── */
+    const QTE_TEXT = [
+        "복도에서 발소리.<br>누군가 이 집 문 앞에 섰다.",
+        "삐— 삐— 삐—<br>현관 도어락이 눌리고 있다."
+    ];
+    function triggerQTE() {
+        if (room.ended || room.qteCount >= 2) return;
+        const i = room.qteCount; room.qteCount++;
+        const q = document.getElementById('qte');
+        document.getElementById('qte-title').innerHTML = QTE_TEXT[Math.min(i, 1)];
+        const total = Math.max(3.6, 8 - (Math.min(100, room.noise) / 100) * 4.4);   // 시끄러웠을수록 시간이 없다
+        document.getElementById('qte-sub').textContent = "숨을 곳을 고른다 · " + total.toFixed(1) + "초";
+        const fill = document.getElementById('qte-fill');
+        fill.style.transition = "none"; fill.style.width = "100%";
+        q.classList.add('show');
+        sfx('alarm'); startHeart(132);
+        let left = total;
+        clearInterval(qteTick);
+        qteTick = setInterval(() => {
+            left -= 0.1;
+            fill.style.width = Math.max(0, (left / total) * 100) + "%";
+            if (left <= 0) {
+                clearInterval(qteTick); q.classList.remove('show'); stopHeart(); badEnd('caught');
+            }
+        }, 100);
+    }
+    function qtePick(where) {
+        clearInterval(qteTick); stopHeart();
+        document.getElementById('qte').classList.remove('show');
+        if (where === 'bed') qteSurvive();
+        else badEnd(where === 'closet' ? 'hole' : 'curtain');
+    }
+    function qteSurvive() {
+        room.noise = Math.max(0, room.noise - 45); updateHUD();
+        sfx('thud');
+        const lines = room.qteCount === 1 ? [
+            { text: "(침대 밑으로 미끄러져 들어갔다. 먼지. 심장이 귀에서 뛴다.)" },
+            { text: "문 앞에서 발소리가 멈췄다. …열쇠 소리는 안 나." },
+            { text: "발소리는 <em>옆집 쪽</em>으로 사라졌다. 저 사람, 문을 안 써." }
+        ] : [
+            { text: "(다시 침대 밑. 뺨이 장판에 닿는다.)" },
+            { text: "도어락이 세 번 틀리고 조용해졌다. 비밀번호를 바꿨구나, 연정아." },
+            { text: "…근데 왜 발소리가 멀어지질 않지." }
+        ];
+        queueDialogue(lines, () => {
+            if (room.ceilingArmed && !room.ceilingShown) setTimeout(showCeiling, 900);
+            else roomNext();
+        });
     }
 
     /* ── 엔딩 ── */
+    const BAD_ENDS = {
+        dark:    { tag:"BAD END · 암전", title:"어둠에 삼켜졌다",
+                   body:"손전등이 완전히 죽었다.<br>완전한 어둠 속, 아주 가까운 곳에서<br>누군가 조용히 숨을 쉬고 있었다." },
+        caught:  { tag:"BAD END · 발각", title:"늦었다",
+                   body:"어디에 숨을지 고르는 사이 문이 열렸다.<br>301호의 불은 끝내 켜지지 않았고,<br>복도는 다시 조용해졌다." },
+        hole:    { tag:"BAD END · 벽 속의 손", title:"거기가 그 사람 길이었다",
+                   body:"옷장 문을 닫는 순간,<br>등 뒤 석고보드 구멍에서 손이 나왔다.<br>그 구멍은 나가는 길이 아니라 <b>들어오는 길</b>이었다." },
+        curtain: { tag:"BAD END · 커튼 아래", title:"발끝이 보였다",
+                   body:"커튼 뒤에서 숨을 참았다.<br>커튼은 발목까지 오지 않는다.<br>…맞은편 옥상에서, 누군가 손을 흔들었다." }
+    };
+    function badEnd(kind) {
+        if (room.ended) return;
+        if (kind === 'dark' && !room.mercy) { room.mercy = true; darkMercy(); return; }
+        room.ended = true; stopRoomSystems();
+        vnBox.classList.remove('show'); dialogueQueue = []; dialogueDone = null;
+        if (bgmGain && audioCtx) bgmGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        sfx('thud');
+        const d = BAD_ENDS[kind] || BAD_ENDS.caught;
+        setTimeout(() => showEndCard(d.tag, d.title, d.body, "#ff6b6b", true), 700);
+    }
+    function darkMercy() {
+        room.battery = 22; updateHUD();
+        const rm = document.getElementById('scene-room');
+        rm.classList.add('blackout'); startHeart(150); sfx('creak');
+        roomToast("손전등이 꺼졌다.<br>…숨을 참았다.", 2600);
+        setTimeout(() => {
+            rm.classList.remove('blackout'); stopHeart();
+            queueDialogue([
+                { text: "(손전등 몸통을 손바닥으로 세게 쳤다.) …켜졌다." },
+                { text: "<em>22%.</em> 다음은 없어. 진짜로 없어." }
+            ], roomNext);
+        }, 2800);
+    }
+    function showEndCard(tag, title, body, color, retry) {
+        document.getElementById('ec-tag').textContent = tag;
+        const t = document.getElementById('ec-title'); t.textContent = title; t.style.color = color;
+        document.getElementById('ec-body').innerHTML = body;
+        document.getElementById('ec-stat').textContent = "수집한 진실  " + cluesFound() + " / " + CLUE_KEYS.length;
+        document.getElementById('ec-retry').style.display = retry ? 'block' : 'none';
+        document.getElementById('end-card').classList.add('show');
+    }
     function triggerHitEvent() {
+        room.ended = true; stopRoomSystems();
         const container = document.getElementById('game-container');
         const endSeq = document.getElementById('end-sequence');
         const crack = document.getElementById('glass-crack');
         const endText = document.getElementById('end-text');
-        if (bgmGain) bgmGain.gain.setValueAtTime(0, audioCtx.currentTime);
+        if (bgmGain && audioCtx) bgmGain.gain.setValueAtTime(0, audioCtx.currentTime);
         playScream();
         container.classList.add('shake-hard');
         endSeq.classList.add('hit'); crack.style.opacity = "1";
@@ -748,6 +1517,40 @@
             endSeq.classList.add('fade-out');
             endText.style.transition = "opacity 2.5s ease-in"; endText.style.opacity = "1";
         }, 600);
+        setTimeout(() => {
+            showEndCard("TRUE END · 세 번째 사람", "천장을 봐 주세요",
+                "연정이는 내게서 오빠를 뺏은 여자가 아니었다.<br>나와 같은 사람에게 쫓기던, <b>먼저 온 사람</b>이었다.<br><br>편지의 마지막 줄을 나는 너무 늦게 읽었다.",
+                "#ff4444", false);
+        }, 5400);
+    }
+
+    /* ── 이 방부터 다시 ── */
+    function restartRoom() {
+        document.getElementById('end-card').classList.remove('show');
+        const endSeq = document.getElementById('end-sequence');
+        endSeq.className = ''; endSeq.style.opacity = '';
+        document.getElementById('glass-crack').style.opacity = "0";
+        document.getElementById('end-text').style.opacity = "0";
+        document.getElementById('game-container').classList.remove('shake-hard');
+
+        room = Object.assign({}, roomInit, { found: {} });
+        document.querySelectorAll('.room-hs').forEach(el => {
+            el.classList.remove('done');
+            el.classList.toggle('hidden', el.dataset.spawn === '1');
+        });
+        document.querySelector('.rf-closet').classList.remove('opened');
+        document.querySelector('.rf-laptop').classList.remove('on');
+        const rm = document.getElementById('scene-room');
+        rm.classList.remove('uv', 'blackout', 'lowbat');
+        rm.style.pointerEvents = "auto";
+        document.getElementById('uv-toggle').classList.remove('on');
+        closeLap(); document.getElementById('letter-modal').classList.remove('show');
+        document.getElementById('qte').classList.remove('show');
+        vnBox.classList.remove('show'); dialogueQueue = []; dialogueDone = null;
+        if (bgmGain && audioCtx) bgmGain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+
+        centerLight(); updateHUD(); startRoomLoop();
+        queueDialogue([{ text: "(…다시. 처음부터.<br>이번엔 절대 소리를 내지 마.)" }], roomNext);
     }
 
     window.onload = () => {
