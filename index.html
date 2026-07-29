@@ -992,6 +992,7 @@
             centerLight();
             queueDialogue([
                 { text: "여기가 <em>김연정 방</em>이야. 주인 없는 틈에 몰래 들어왔어." },
+                { text: "<em>오빠 흔적</em>을 찾을 거야. 여기서 뭘 했는지 내 눈으로 봐야 해." },
                 { text: "화면을 문지르면 손전등이 따라와. 반짝이는 곳을 눌러보자." }
             ]);
         }, 1500);
@@ -1013,24 +1014,24 @@
         case 'shoes':
             markSeen('shoes');
             queueDialogue([
-                { text: "현관에 남자 구두. 안창엔 <em>275</em>. 오빠는 260이야." },
-                { text: "연정이 혼자 사는 집인데, 누가 여기서 신을 벗어." }
+                { text: "현관에 남자 구두. …찾았어. 오빠가 여기 드나든 거야." },
+                { text: "근데 안창에 <em>275</em>. 오빠는 260이야. 내가 제일 잘 알아." }
             ], afterSpot);
             break;
 
         case 'mirror':
             markSeen('mirror');
             queueDialogue([
-                { text: "화장대 서랍에 약통. <em>수면제</em>, 처방자 김연정. 석 달 연속." },
-                { text: "잠드는 게 무서운 사람만 이렇게 먹어. …거울이 뿌옇네. <em>UV</em>로 비춰볼까." }
-            ], afterSpot);
+                { text: "서랍을 뒤졌어. 오빠 물건은 없고 <em>수면제</em>만 한가득이야." },
+                { text: "처방자 김연정, 석 달 연속. 잠드는 게 무서운 사람만 이렇게 먹어." }
+            ], () => { roomToast("거울이 유난히 뿌옇다. <em>UV</em>를 비춰볼까.", 3200); afterSpot(); });
             break;
 
         case 'bed':
             markSeen('bed'); sfx('cloth');
             queueDialogue([
-                { text: "시트가 축축해. 식은땀 자국이 사람 모양으로 남았어." },
-                { text: "베개 밑에 연정이 휴대폰. 모르는 번호로 172통 — <em>“문 잠가도 소용없어.”</em>" }
+                { text: "이불을 걷었어. 두 사람 흔적이 있어야 해. …근데 이건 <em>식은땀</em> 자국이야." },
+                { text: "베개 밑 휴대폰. 모르는 번호로 172통 — <em>“문 잠가도 소용없어.”</em>" }
             ], afterSpot);
             break;
 
@@ -1045,7 +1046,7 @@
             markSeen('desk');
             queueDialogue([
                 { text: "책상에 <em>전동 드릴</em>. 장갑엔 하얀 석고 가루." },
-                { text: "연정이가 쓸 물건이 아니야. 누가 여기서 <em>벽이나 천장을 뚫었어.</em>" }
+                { text: "오빠도, 연정이도 쓸 물건이 아니야. 누가 <em>벽이나 천장을 뚫었어.</em>" }
             ], afterSpot);
             break;
 
@@ -1053,8 +1054,9 @@
             markSeen('closet'); sfx('creak');
             document.querySelector('.rf-closet').classList.add('opened');
             queueDialogue([
-                { text: "연정이 옷 사이에 남자 외투. 담배 냄새. 오빠는 담배 안 피워." },
-                { text: "…옷장 뒤판이 뜯겨 있어. <em>사람이 기어 지나갈 구멍</em>이 옆집 쪽으로." }
+                { text: "옷장에 남자 외투. <em>담배 냄새</em>야 — 오빠 냄새. 여기 있었던 거야!" },
+                { text: "…근데 어깨가 너무 넓어. 구두도 275였지. <em>오빠 체격이 아니야.</em>" },
+                { text: "옷장 뒤판도 뜯겨 있어. <em>사람이 기어 지나갈 구멍</em>이 옆집 쪽으로." }
             ], () => { scareEvent(); });
             break;
 
@@ -1119,7 +1121,7 @@
             room.uvSeen = true;
             queueDialogue([
                 { text: "벽에, 거울에, 바닥에… <em>남의 흔적</em>이 잔뜩 떠올랐다." },
-                { text: "발자국은 <em>옷장에서 침대 쪽</em>으로 이어져. 몇 번이고, 매일 밤." }
+                { text: "발자국은 <em>옷장에서 침대 쪽</em>으로. 오빠 발보다 크고, 몇 번이고, 매일 밤." }
             ]);
         }
     }
